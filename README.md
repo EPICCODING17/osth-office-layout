@@ -18,9 +18,36 @@ npx serve .
 python -m http.server 8000
 ```
 
-No backend required — state lives in the browser's `localStorage`
-(`osth-office-3d-v1`). Use the **Export JSON** / **Export SQL** buttons in the
-header to snapshot the current layout to `data/`.
+No backend required. State lives in the browser's `localStorage`
+(`osth-office-3d-v1`) as a fast local cache, but the durable copy is
+`data/osth-office-layout.json` on GitHub — see **GitHub auto-sync** below.
+Use the **Export JSON** / **Export SQL** buttons in the header to
+download a snapshot any time.
+
+## GitHub auto-sync
+
+Click **GitHub** in the header once to paste a Personal Access Token —
+after that, edits (drag/rename/add/delete) push to
+`data/osth-office-layout.json` on GitHub automatically, ~4s after you stop
+editing (debounced, so a drag doesn't spam commits). Any browser/device that
+opens the live site loads the latest data from GitHub on start.
+
+**Setting it up (Pong, do this once per browser you edit from):**
+1. Create a token at https://github.com/settings/personal-access-tokens/new
+   — **fine-grained**, repository access limited to just `osth-office-layout`,
+   permission **Contents: Read and write** only. Give it an expiry (e.g. 90 days).
+2. Click **GitHub** in the app header, paste the token, **บันทึก**.
+3. Watch the status pill next to it: gray = not connected, pulsing amber =
+   saving, green = saved (with a timestamp), red = error (hover/toast shows why).
+
+The token is stored only in that browser's `localStorage` and is sent only to
+`api.github.com` directly — nothing else sees it. Anyone with access to that
+browser could read it out of localStorage, so keep the token scoped to just
+this one repo as above, and re-generate/revoke it from GitHub settings if a
+machine you used it on is ever compromised.
+
+A browser with no token configured is read-only: it always loads the latest
+GitHub data but never pushes.
 
 ## Structure
 
