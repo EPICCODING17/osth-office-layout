@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OSTH — ผังเดินสาย LAN / TEL / POWER / FAX (3D)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.184.0/build/three.module.js",
+    "three/addons/controls/OrbitControls.js": "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js",
+    "three/addons/exporters/OBJExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js",
+    "three/addons/exporters/GLTFExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js"
+  },
+  "integrity": {
+    "https://unpkg.com/three@0.184.0/build/three.module.js": "sha384-8FCZ1eVO6it4+pbec2aDtnTrwjWXZLJRC+MAGCIPDgsYnUrl/E0A2YlF8ioMKI/J",
+    "https://unpkg.com/three@0.184.0/build/three.core.js": "sha384-dw2ooPewaEIrAgl6oFDBmmBWCE9oW9LxRGcfwZ0hLvEprzo202wXl7vCYHRlSnOT",
+    "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js": "sha384-4rziNxOBZKQ69i+w+f89KJ55TCYquwchVbByQwmaOeIOXdOU2PLDn3kOfXHwIJC9",
+    "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js": "sha384-nbwtoZENJD3Vq+ACK0CuGQdPMuDWHkamC2KJD70EV5nfg6jQjfppKOea07YJN+N3",
+    "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js": "sha384-VofkvpG6HERhFCYbsUOHeNXBCqID2nfqkQqnVzE1jc/oPcz+qJ13ADdXH08hE+cQ"
+  }
+}
+</script>
+<style>
+  :root{
+    --bg:#0e1014; --panel:#161a21; --panel2:#1c212b; --line:#262c38;
+    --text:#e8eaf0; --dim:#8b93a5; --accent:#4f7df3;
+    --lan:#3b82f6; --tel:#22c55e; --power:#f59e0b; --fax:#ef4444;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{height:100%}
+  body{font-family:"Noto Sans Thai",sans-serif; background:var(--bg); color:var(--text); overflow:hidden}
+  a{color:var(--accent)} a:hover{color:#7ea0f7}
+  #app{display:flex; flex-direction:column; height:100vh}
+  header{display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:6px 12px; min-height:52px; background:var(--panel); border-bottom:1px solid var(--line); flex-shrink:0}
+  header h1{font-size:14px; font-weight:700; white-space:nowrap}
+  header h1 span{color:var(--dim); font-weight:500}
+  .tabs{display:flex; gap:4px; background:var(--panel2); border-radius:8px; padding:3px}
+  .tabs button{border:0; background:transparent; color:var(--dim); font:inherit; font-size:12.5px; font-weight:600; padding:5px 10px; border-radius:6px; cursor:pointer; white-space:nowrap}
+  .tabs button:hover{color:var(--text)}
+  .tabs button.on{background:var(--accent); color:#fff}
+  .toggles{display:flex; gap:5px; margin-left:auto; flex-wrap:wrap}
+  .tgl{display:flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600; color:var(--dim); background:var(--panel2); border:1px solid var(--line); border-radius:7px; padding:4px 8px; cursor:pointer; user-select:none; white-space:nowrap}
+  .tgl .dot{width:9px; height:9px; border-radius:3px; opacity:.25}
+  .tgl.on{color:var(--text); border-color:#333c4e}
+  .tgl.on .dot{opacity:1}
+  .actions{display:flex; gap:6px}
+  .actions button{border:1px solid var(--line); background:var(--panel2); color:var(--text); font:inherit; font-size:11.5px; font-weight:600; padding:5px 9px; border-radius:7px; cursor:pointer; white-space:nowrap}
+  .actions button:hover{background:#232a37}
+  .actions button.warn{color:#f0a0a0}
+  #body{display:flex; flex:1; min-height:0}
+  aside.palette{width:190px; background:var(--panel); border-right:1px solid var(--line); padding:10px; overflow-y:auto; flex-shrink:0}
+  .pal-h{font-size:11px; font-weight:700; color:var(--dim); letter-spacing:.06em; margin:10px 4px 6px}
+  .pal-h:first-child{margin-top:0}
+  .pal{display:grid; grid-template-columns:1fr 1fr; gap:6px}
+  .pal button{display:flex; flex-direction:column; align-items:center; gap:5px; border:1px solid var(--line); background:var(--panel2); color:var(--text); font:inherit; font-size:11.5px; font-weight:500; padding:9px 4px 7px; border-radius:9px; cursor:pointer; line-height:1.15}
+  .pal button:hover{background:#232a37; border-color:#38415a}
+  .pal button.armed{border-color:var(--accent); background:#1d2740}
+  .glyph{width:26px; height:20px; position:relative}
+  main{flex:1; position:relative; min-width:0}
+  #stage{position:absolute; inset:0}
+  #stage canvas{display:block}
+  #hint{position:absolute; left:12px; bottom:12px; max-width:min(640px, calc(100% - 24px)); background:rgba(14,16,20,.82); border:1px solid var(--line); border-radius:8px; padding:6px 12px; font-size:11px; color:var(--dim); pointer-events:none; backdrop-filter:blur(4px); line-height:1.5}
+  #stats{position:absolute; left:12px; bottom:58px; background:rgba(14,16,20,.82); border:1px solid var(--line); border-radius:8px; padding:8px 12px; font-size:12px; backdrop-filter:blur(4px)}
+  #stats b{font-weight:700}
+  #stats .s{display:inline-flex; align-items:center; gap:5px; margin-right:12px}
+  #stats .s i{width:8px; height:8px; border-radius:2px; display:inline-block}
+  #toast{position:absolute; top:14px; left:50%; transform:translateX(-50%); background:#232a37; border:1px solid #38415a; color:var(--text); border-radius:8px; padding:7px 16px; font-size:12.5px; opacity:0; transition:opacity .25s; pointer-events:none}
+  aside.props{width:250px; background:var(--panel); border-left:1px solid var(--line); padding:12px; overflow-y:auto; flex-shrink:0; display:none}
+  aside.props.open{display:block}
+  .pr-type{font-size:11px; font-weight:700; color:var(--dim); letter-spacing:.05em}
+  .pr-row{margin-top:10px}
+  .pr-row label{display:block; font-size:11px; font-weight:600; color:var(--dim); margin-bottom:4px}
+  .pr-row input,.pr-row select{width:100%; background:var(--panel2); border:1px solid var(--line); color:var(--text); font:inherit; font-size:13px; border-radius:7px; padding:6px 8px}
+  .pr-row input:focus,.pr-row select:focus{outline:none; border-color:var(--accent)}
+  .pr-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+  .svc{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+  .svc .pr-row label i{display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:5px; vertical-align:0}
+  .pr-btns{display:flex; gap:8px; margin-top:16px}
+  .pr-btns button{flex:1; border:1px solid var(--line); background:var(--panel2); color:var(--text); font:inherit; font-size:12.5px; font-weight:600; padding:7px 0; border-radius:7px; cursor:pointer}
+  .pr-btns button:hover{background:#232a37}
+  .pr-btns button.del{color:#f27d7d; border-color:#4a2a2e}
+  .pr-btns button.del:hover{background:#33202400}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>OSTH <span>· ผังเดินสาย 3D</span></h1>
+    <div class="tabs" id="tabs">
+      <button data-f="1">ชั้น 1</button>
+      <button data-f="2">ชั้น 2</button>
+      <button data-f="3">ชั้น 3</button>
+      <button data-f="all">ทั้งอาคาร</button>
+    </div>
+    <div class="toggles" id="toggles">
+      <div class="tgl on" data-t="lan"><span class="dot" style="background:var(--lan)"></span>LAN</div>
+      <div class="tgl on" data-t="tel"><span class="dot" style="background:var(--tel)"></span>TEL</div>
+      <div class="tgl on" data-t="power"><span class="dot" style="background:var(--power)"></span>POWER</div>
+      <div class="tgl on" data-t="fax"><span class="dot" style="background:var(--fax)"></span>FAX</div>
+      <div class="tgl on" data-t="labels"><span class="dot" style="background:#8b93a5"></span>ป้ายชื่อ</div>
+    </div>
+    <div class="actions">
+      <button id="exportJson">Export JSON</button>
+      <button id="exportSql">Export SQL</button>
+      <button id="reset" class="warn" title="ล้างผังและกลับไปใช้ข้อมูลจาก Excel">รีเซ็ต</button>
+    </div>
+  </header>
+  <div id="body">
+    <aside class="palette" id="palette"></aside>
+    <main>
+      <div id="stage"></div>
+      <div id="stats"></div>
+      <div id="hint">คลิกอุปกรณ์ด้านซ้ายแล้วคลิกวางบนพื้น · Shift ค้าง = วางต่อเนื่อง · ลากย้าย · R หมุน · Ctrl+D ทำสำเนา · Delete ลบ</div>
+      <div id="toast"></div>
+    </main>
+    <aside class="props" id="props"></aside>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+/* ---------- data ---------- */
+const LS_KEY = 'osth-office-3d-v1';
+const FLOORS = [{id:1,name:'ชั้น 1'},{id:2,name:'ชั้น 2'},{id:3,name:'ชั้น 3'}];
+const W = 17, D = 11;               // floor size (m)
+const FLOOR_GAP = 4.2;              // stacked view spacing
+const SVC = ['lan','tel','power','fax'];
+const SVC_COLOR = {lan:0x3b82f6, tel:0x22c55e, power:0xf59e0b, fax:0xef4444};
+const SVC_LABEL = {lan:'LAN', tel:'TEL', power:'POWER', fax:'FAX'};
+
+const TYPE_LABEL = {
+  workstation:'โต๊ะทำงาน + คอม', desk:'โต๊ะเปล่า', meeting:'โต๊ะประชุม', chair:'เก้าอี้',
+  cabinet:'ตู้เอกสาร', monitor:'จอมอนิเตอร์', pc:'เครื่องคอม', printer:'ปริ้นเตอร์/Copier',
+  rack:'ตู้ Rack (MDF)', panel:'ตู้ไฟ', wifi:'WiFi AP', outlet:'จุดปลั๊ก/เต้ารับ', wall:'ผนังกั้น'
+};
+const TYPE_DEFAULT_SVC = {
+  workstation:{lan:1,tel:1,power:1,fax:0}, printer:{lan:1,tel:0,power:1,fax:0},
+  wifi:{lan:1,tel:0,power:0,fax:0}, outlet:{lan:1,tel:0,power:1,fax:0},
+  meeting:{lan:1,tel:0,power:1,fax:0}
+};
+
+function seedItems(){
+  let id = 1;
+  const it = (type,name,floor,x,z,rot=0,ex={}) => ({
+    id:id++, type, name, floor, x, z, rot,
+    lan:0, tel:0, power:0, fax:0, ext:'', note:'', lanNo:'', telNo:'',
+    ...(TYPE_DEFAULT_SVC[type]||{}), ...ex
+  });
+  const list = [
+    // ---- 1F ----
+    it('workstation','Thep',1,-6.6,-1,0,{ext:'11'}),
+    it('workstation','Kanuang',1,-4.8,-1,0,{ext:'10'}),
+    it('workstation','Pong',1,-3.0,-1,0,{ext:'13'}),
+    it('workstation','Nook',1,-6.6,1.2,180,{ext:'12'}),
+    it('workstation','Golf',1,-4.8,1.2,180,{ext:'15'}),
+    it('workstation','Kook',1,-3.0,1.2,180,{ext:'0',note:'*OP'}),
+    it('workstation','Pooh',1,-1.2,1.2,180,{ext:'12'}),
+    it('workstation','Pee',1,1.5,-1,0,{ext:'31'}),
+    it('workstation','Keng',1,3.3,-1,0,{ext:'31'}),
+    it('workstation','Oil',1,5.1,-1,0,{ext:'30'}),
+    it('workstation','Oum',1,6.9,-1,0,{ext:'30'}),
+    it('workstation','Naka',1,1.5,1.2,180,{ext:'24'}),
+    it('workstation','Kuma',1,3.3,1.2,180,{ext:'21'}),
+    it('workstation','Bird',1,5.1,1.2,180,{ext:'33'}),
+    it('workstation','Jeng',1,6.9,1.2,180,{ext:'33'}),
+    it('workstation','Milk',1,2.4,3.4,0,{ext:'32'}),
+    it('workstation','Joe',1,4.2,3.4,0,{ext:'34'}),
+    it('printer','Old Fuji Xerox',1,-1.5,-4.2,0),
+    it('printer','Old Fuji Xerox ช่าง',1,6.6,2.2,180,{fax:1,note:'โซนช่าง'}),
+    it('outlet','Spare 1',1,-7.7,-4.3,0,{note:'หน้าห้องน้ำ'}),
+    it('outlet','Spare 2',1,-7.0,-4.3,0,{note:'หน้าห้องน้ำ'}),
+    it('wifi','Wifi New 1',1,7.6,-4.5,0,{note:'ห้องครัว'}),
+    it('wifi','Wifi New 2',1,-7.7,4.4,0,{note:'ห้องช่าง'}),
+    it('rack','Rack 1F',1,-0.3,-4.6,0),
+    it('panel','ตู้ไฟ 1F',1,1.1,-4.6,0),
+    // ---- 2F ----
+    it('workstation','Nate',2,-3.2,-1,0,{ext:'14'}),
+    it('workstation','Fah',2,-1.4,-1,0,{ext:'14'}),
+    it('workstation','Sri',2,0.4,-1,0,{tel:2,ext:'22,23'}),
+    it('printer','New Fuji Xerox',2,2.8,-1.2,0),
+    it('meeting','Meeting 2',2,-2.4,2.4,0,{tel:1}),
+    it('meeting','Meeting 1 VIP',2,-5.5,3.6,0,{tel:1}),
+    it('workstation','Demo 1',2,4.4,2.2,180,{note:'โซนช่าง'}),
+    it('rack','Rack 2F',2,-0.3,-4.6,0),
+    it('panel','ตู้ไฟ 2F',2,1.1,-4.6,0),
+    // ---- 3F ----
+    it('rack','Rack 3F',3,-0.3,-4.6,0),
+    it('panel','ตู้ไฟ 3F',3,1.1,-4.6,0),
+  ];
+  numberCables(list);
+  return list;
+}
+function numberCables(items){
+  const run = {};
+  items.forEach(i=>{
+    if(i.lan>0 && !(i.lanNo||'').trim()){
+      run[i.floor] = (run[i.floor]||0)+1;
+      i.lanNo = i.floor + 'F-' + String(run[i.floor]).padStart(2,'0');
+    }
+    if((i.tel>0||i.fax>0) && !(i.telNo||'').trim() && (i.ext||'').trim() && i.ext!=='-') i.telNo = i.ext;
+  });
+}
+
+let state = load();
+function load(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw){ const s = JSON.parse(raw); if(Array.isArray(s.items)){
+      s.items.forEach(i=>{ if(i.lanNo===undefined) i.lanNo=''; if(i.telNo===undefined) i.telNo=''; });
+      if(!s.items.some(i=>(i.lanNo||'').trim())) numberCables(s.items);
+      return s;
+    } }
+  }catch(e){}
+  const items = seedItems();
+  return { items, nextId: Math.max(...items.map(i=>i.id))+1 };
+}
+let saveT;
+function save(){ clearTimeout(saveT); saveT = setTimeout(()=>localStorage.setItem(LS_KEY, JSON.stringify(state)), 200); }
+
+const ui = { floor:1, mode:'floor', show:{lan:true,tel:true,power:true,fax:true,labels:true}, selected:null, placing:null };
+
+/* ---------- three setup ---------- */
+const stageEl = document.getElementById('stage');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x101318);
+scene.fog = new THREE.Fog(0x101318, 30, 70);
+const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 200);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+stageEl.appendChild(renderer.domElement);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = .08;
+controls.maxPolarAngle = Math.PI/2 - .02;
+function setCam(mode){
+  if(mode==='all'){ camera.position.set(16,15,17); controls.target.set(0,4.5,0); }
+  else { camera.position.set(9.5,11,11.5); controls.target.set(0,0.6,0); }
+  controls.update();
+}
+setCam('floor');
+
+scene.add(new THREE.HemisphereLight(0xbfd0ff, 0x2a2c33, 1.0));
+const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+sun.position.set(12,18,8); sun.castShadow = true;
+sun.shadow.mapSize.set(2048,2048);
+Object.assign(sun.shadow.camera, {left:-14,right:14,top:14,bottom:-14,near:2,far:50});
+scene.add(sun);
+
+function resize(){
+  const w = stageEl.clientWidth, h = stageEl.clientHeight;
+  renderer.setSize(w,h); renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  camera.aspect = w/h; camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stageEl);
+resize();
+
+/* ---------- materials ---------- */
+const M = {
+  wood: new THREE.MeshStandardMaterial({color:0x9c7c55, roughness:.7}),
+  woodDark: new THREE.MeshStandardMaterial({color:0x7a6244, roughness:.75}),
+  metal: new THREE.MeshStandardMaterial({color:0x3a4150, roughness:.4, metalness:.6}),
+  dark: new THREE.MeshStandardMaterial({color:0x23262e, roughness:.6}),
+  screen: new THREE.MeshStandardMaterial({color:0x0d1523, roughness:.25, emissive:0x1a3a6b, emissiveIntensity:.7}),
+  body: new THREE.MeshStandardMaterial({color:0xd7d9de, roughness:.55}),
+  chair: new THREE.MeshStandardMaterial({color:0x3a4252, roughness:.8}),
+  cabinet: new THREE.MeshStandardMaterial({color:0x77818f, roughness:.6}),
+  rack: new THREE.MeshStandardMaterial({color:0x14171f, roughness:.45}),
+  panelGray: new THREE.MeshStandardMaterial({color:0xa8afc0, roughness:.5}),
+  wifi: new THREE.MeshStandardMaterial({color:0xe8eaf0, roughness:.5}),
+  wall: new THREE.MeshStandardMaterial({color:0xaab4c8, roughness:.9, transparent:true, opacity:.35}),
+  sel: new THREE.MeshBasicMaterial({color:0x4f7df3, transparent:true, opacity:.35, depthWrite:false}),
+};
+const svcMats = {}; SVC.forEach(s=> svcMats[s] = new THREE.MeshStandardMaterial({color:SVC_COLOR[s], emissive:SVC_COLOR[s], emissiveIntensity:.45, roughness:.4}));
+
+function box(w,h,d,mat,x=0,y=0,z=0){
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat);
+  m.position.set(x,y,z); m.castShadow = true; m.receiveShadow = true; return m;
+}
+function cyl(rt,rb,h,mat,x=0,y=0,z=0,seg=16){
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg), mat);
+  m.position.set(x,y,z); m.castShadow = true; return m;
+}
+
+/* ---------- item builders ---------- */
+const BUILDERS = {
+  desk(g){
+    g.add(box(1.4,.05,.7,M.wood,0,.73,0));
+    [[-.65,-.3],[.65,-.3],[-.65,.3],[.65,.3]].forEach(([x,z])=>g.add(box(.05,.71,.05,M.metal,x,.355,z)));
+  },
+  workstation(g){
+    BUILDERS.desk(g);
+    const mon = new THREE.Group();
+    mon.add(box(.55,.33,.03,M.dark,0,1.08,0));
+    const scr = box(.5,.28,.005,M.screen,0,1.08,.02); scr.castShadow=false; mon.add(scr);
+    mon.add(cyl(.03,.03,.25,M.metal,0,.87,0));
+    mon.add(cyl(.11,.13,.02,M.metal,0,.765,0));
+    mon.position.z = -.15; g.add(mon);
+    g.add(box(.18,.42,.45,M.dark,-.55,.21,0));            // tower
+    g.add(box(.42,.02,.15,M.dark,.05,.765,.18));          // keyboard
+    const ch = new THREE.Group();
+    ch.add(box(.45,.06,.45,M.chair,0,.46,0));
+    ch.add(box(.45,.5,.06,M.chair,0,.78,.22));
+    ch.add(cyl(.03,.03,.4,M.metal,0,.25,0));
+    ch.add(cyl(.24,.26,.03,M.dark,0,.05,0));
+    ch.position.z = .62; ch.rotation.y = Math.PI; g.add(ch);
+  },
+  meeting(g){
+    g.add(box(2.4,.05,1.2,M.woodDark,0,.735,0));
+    g.add(box(.12,.71,.9,M.metal,-.95,.355,0));
+    g.add(box(.12,.71,.9,M.metal,.95,.355,0));
+  },
+  chair(g){
+    g.add(box(.45,.06,.45,M.chair,0,.46,0));
+    g.add(box(.45,.5,.06,M.chair,0,.78,.22));
+    g.add(cyl(.03,.03,.4,M.metal,0,.25,0));
+    g.add(cyl(.24,.26,.03,M.dark,0,.05,0));
+  },
+  cabinet(g){
+    g.add(box(.8,1.8,.45,M.cabinet,0,.9,0));
+    for(let i=0;i<4;i++) g.add(box(.7,.015,.02,M.dark,0,.35+i*.42,.23));
+  },
+  monitor(g){
+    g.add(box(.55,.33,.03,M.dark,0,1.08,0));
+    const s = box(.5,.28,.005,M.screen,0,1.08,.02); s.castShadow=false; g.add(s);
+    g.add(cyl(.03,.03,.3,M.metal,0,.85,0));
+    g.add(cyl(.12,.14,.03,M.metal,0,.71,0));
+    g.add(box(.5,.7,.5,M.woodDark,0,.35,0));
+  },
+  pc(g){ g.add(box(.2,.45,.45,M.dark,0,.225,0)); g.add(box(.16,.02,.02,svcMats.lan,0,.38,.23)); },
+  printer(g){
+    g.add(box(.62,.55,.6,M.body,0,.85,0));
+    g.add(box(.55,.06,.4,M.dark,0,1.15,.05));
+    g.add(box(.6,.55,.55,M.dark,0,.28,0));
+    g.add(box(.5,.03,.35,M.body,0,.6,.2));
+  },
+  rack(g){
+    g.add(box(.65,2,.8,M.rack,0,1,0));
+    for(let i=0;i<6;i++){
+      const led = box(.5,.06,.02,i%2?svcMats.lan:svcMats.tel,0,.45+i*.26,.41);
+      led.castShadow=false; g.add(led);
+    }
+  },
+  panel(g){
+    g.add(box(.45,.65,.14,M.panelGray,0,1.35,0));
+    g.add(box(.35,.5,.02,M.dark,0,1.35,.075));
+    g.add(box(.06,1.05,.06,M.metal,-.15,.5,0));
+    g.add(box(.06,1.05,.06,M.metal,.15,.5,0));
+  },
+  wifi(g){
+    g.add(cyl(.025,.035,2.4,M.metal,0,1.2,0));
+    g.add(cyl(.16,.16,.05,M.wifi,0,2.42,0,24));
+    const l = cyl(.03,.03,.02,svcMats.lan,0,2.46,0,12); l.castShadow=false; g.add(l);
+  },
+  outlet(g){
+    g.add(box(.28,.12,.28,M.dark,0,.06,0));
+  },
+  wall(g){
+    g.add(box(3,2.5,.12,M.wall,0,1.25,0));
+  },
+};
+
+function svcStuds(g, item){
+  let i = 0;
+  SVC.forEach(s=>{
+    for(let n=0;n<(item[s]||0);n++){
+      const st = cyl(.045,.055,.1,svcMats[s], -.3+i*.16, .05, .48, 10);
+      st.castShadow = false; st.userData.svc = s; g.add(st); i++;
+    }
+  });
+}
+
+/* ---------- labels ---------- */
+function makeLabel(item){
+  const line1 = item.name;
+  const segs = [];
+  const telDisp = (item.telNo||'').trim() || (item.ext||'').trim();
+  if(item.lan && (item.lanNo||'').trim()) segs.push(['LAN ' + item.lanNo, '#6ea3ff']);
+  if(item.tel && telDisp) segs.push(['TEL ' + telDisp, '#4ade80']);
+  if(item.fax && telDisp && !item.tel) segs.push(['FAX ' + telDisp, '#f87171']);
+  const c = document.createElement('canvas');
+  const x = c.getContext('2d');
+  const F1 = '600 26px "Noto Sans Thai", sans-serif';
+  const F2 = '700 22px "Noto Sans Thai", sans-serif';
+  x.font = F1;
+  const w1 = x.measureText(line1).width;
+  x.font = F2;
+  const sep = ' · ';
+  const w2 = segs.length ? segs.reduce((a,s)=>a+x.measureText(s[0]).width,0) + (segs.length-1)*x.measureText(sep).width : 0;
+  const w = Math.max(90, Math.max(w1, w2) + 34);
+  const h = segs.length ? 78 : 46;
+  c.width = w; c.height = h;
+  x.fillStyle = 'rgba(13,15,19,.85)';
+  x.beginPath(); x.roundRect(0,0,w,h,10); x.fill();
+  x.strokeStyle = 'rgba(120,135,165,.4)'; x.stroke();
+  x.font = F1; x.fillStyle = '#e8eaf0'; x.textAlign='center'; x.textBaseline='middle';
+  x.fillText(line1, w/2, segs.length ? 22 : 25);
+  if(segs.length){
+    x.font = F2; x.textAlign='left';
+    let cx = (w - w2)/2;
+    segs.forEach((s,i)=>{
+      if(i){ x.fillStyle = '#8b93a5'; x.fillText(sep, cx, 55); cx += x.measureText(sep).width; }
+      x.fillStyle = s[1]; x.fillText(s[0], cx, 55); cx += x.measureText(s[0]).width;
+    });
+  }
+  const tex = new THREE.CanvasTexture(c); tex.anisotropy = 4;
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({map:tex, depthTest:false, transparent:true}));
+  sp.renderOrder = 999;
+  const k = .0055;
+  sp.scale.set(w*k, h*k, 1);
+  sp.userData.isLabel = true;
+  return sp;
+}
+const LABEL_H = {workstation:1.9, desk:1.3, meeting:1.4, chair:1.3, cabinet:2.2, monitor:1.7, pc:1, printer:1.7, rack:2.4, panel:2.1, wifi:2.85, outlet:.8, wall:2.9};
+
+/* ---------- scene graph ---------- */
+const buildingGroup = new THREE.Group(); scene.add(buildingGroup);
+const itemGroups = new Map();
+
+function floorY(f){ return ui.mode==='all' ? (f-1)*FLOOR_GAP : 0; }
+function visibleFloors(){ return ui.mode==='all' ? [1,2,3] : [ui.floor]; }
+
+function buildFloorShell(f){
+  const g = new THREE.Group();
+  const slab = box(W,.18,D,new THREE.MeshStandardMaterial({color:0x232936, roughness:.9}),0,-.09,0);
+  slab.receiveShadow = true; g.add(slab);
+  // grid
+  const pts = [];
+  for(let x=-W/2; x<=W/2; x+=1){ pts.push(new THREE.Vector3(x,.002,-D/2), new THREE.Vector3(x,.002,D/2)); }
+  for(let z=-D/2; z<=D/2; z+=1){ pts.push(new THREE.Vector3(-W/2,.002,z), new THREE.Vector3(W/2,.002,z)); }
+  const grid = new THREE.LineSegments(
+    new THREE.BufferGeometry().setFromPoints(pts),
+    new THREE.LineBasicMaterial({color:0x323a4a, transparent:true, opacity:.55}));
+  g.add(grid);
+  // perimeter walls (translucent, back + left)
+  const wallMat = new THREE.MeshStandardMaterial({color:0x7f8aa3, transparent:true, opacity:.10, roughness:.9, depthWrite:false});
+  const wb = box(W,2.7,.1,wallMat,0,1.35,-D/2); wb.castShadow=false; g.add(wb);
+  const wl = box(.1,2.7,D,wallMat,-W/2,1.35,0); wl.castShadow=false; g.add(wl);
+  // floor name plate
+  const c = document.createElement('canvas'); c.width=256; c.height=96;
+  const x = c.getContext('2d');
+  x.font='700 64px "Noto Sans Thai", sans-serif'; x.fillStyle='#5a6residual'; // replaced below
+  x.clearRect(0,0,256,96);
+  x.font='700 60px "Noto Sans Thai", sans-serif'; x.fillStyle='rgba(139,147,165,.85)';
+  x.textAlign='center'; x.textBaseline='middle'; x.fillText(FLOORS[f-1].name,128,48);
+  const tex = new THREE.CanvasTexture(c);
+  const plate = new THREE.Mesh(new THREE.PlaneGeometry(2.4,.9), new THREE.MeshBasicMaterial({map:tex, transparent:true}));
+  plate.rotation.x = -Math.PI/2; plate.position.set(-W/2+1.6,.01,D/2-.8);
+  g.add(plate);
+  return g;
+}
+
+function buildItemGroup(item){
+  const g = new THREE.Group();
+  (BUILDERS[item.type]||BUILDERS.outlet)(g);
+  if(item.type!=='outlet') svcStuds(g, item); else svcStuds(g, item);
+  const lab = makeLabel(item);
+  lab.position.y = LABEL_H[item.type]||1.5;
+  if((item.lanNo||'').trim() || (item.telNo||item.ext||'').trim()) lab.position.y += .12;
+  lab.visible = ui.show.labels;
+  g.add(lab);
+  g.rotation.y = -item.rot*Math.PI/180;
+  g.position.set(item.x, floorY(item.floor), item.z);
+  g.userData.itemId = item.id;
+  return g;
+}
+
+const cablesGroup = new THREE.Group(); scene.add(cablesGroup);
+function rebuildCables(){
+  cablesGroup.clear();
+  visibleFloors().forEach(f=>{
+    const items = state.items.filter(i=>i.floor===f);
+    const rack = items.find(i=>i.type==='rack');
+    const panel = items.find(i=>i.type==='panel') || rack;
+    const y0 = floorY(f);
+    let lane = 0;
+    items.forEach(it=>{
+      SVC.forEach((s,si)=>{
+        const n = it[s]||0;
+        if(!n || !ui.show[s]) return;
+        const dst = s==='power' ? panel : rack;
+        if(!dst || dst.id===it.id) return;
+        for(let k=0;k<n;k++){
+          const off = (lane%14)*.045 - .3; lane++;
+          const H = y0 + 2.55 + si*.07 + k*.03;
+          const sx = it.x, sz = it.z, dx = dst.x+off*.5, dz = dst.z+.45;
+          const pts = [
+            new THREE.Vector3(sx, y0+.08, sz),
+            new THREE.Vector3(sx, H, sz),
+            new THREE.Vector3(sx, H, dz+off),
+            new THREE.Vector3(dx, H, dz+off),
+            new THREE.Vector3(dx, y0+1.4, dz+off),
+            new THREE.Vector3(dx, y0+1.2, dst.z+.42),
+          ];
+          const line = new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints(pts),
+            new THREE.LineBasicMaterial({color:SVC_COLOR[s], transparent:true, opacity:.75}));
+          cablesGroup.add(line);
+        }
+      });
+    });
+  });
+}
+
+let selRing = null;
+function rebuildScene(){
+  buildingGroup.clear(); itemGroups.clear();
+  visibleFloors().forEach(f=>{
+    const shell = buildFloorShell(f);
+    shell.position.y = floorY(f);
+    buildingGroup.add(shell);
+    state.items.filter(i=>i.floor===f).forEach(it=>{
+      const g = buildItemGroup(it);
+      buildingGroup.add(g);
+      itemGroups.set(it.id, g);
+    });
+  });
+  selRing = new THREE.Mesh(new THREE.RingGeometry(.55,.7,32), M.sel);
+  selRing.rotation.x = -Math.PI/2; selRing.visible = false; selRing.renderOrder = 5;
+  buildingGroup.add(selRing);
+  updateSelRing();
+  rebuildCables();
+  renderStats();
+}
+function updateSelRing(){
+  const it = getSel();
+  if(it && itemGroups.has(it.id)){
+    selRing.visible = true;
+    selRing.position.set(it.x, floorY(it.floor)+.02, it.z);
+  } else if(selRing) selRing.visible = false;
+}
+function getSel(){ return state.items.find(i=>i.id===ui.selected) || null; }
+
+/* ---------- picking / placing / dragging ---------- */
+const ray = new THREE.Raycaster();
+const ptr = new THREE.Vector2();
+const dragPlane = new THREE.Plane(new THREE.Vector3(0,1,0), 0);
+let dragging = null, ghost = null, downPos = null, moved = false;
+
+function ptrUpdate(e){
+  const r = renderer.domElement.getBoundingClientRect();
+  ptr.x = ((e.clientX-r.left)/r.width)*2-1;
+  ptr.y = -((e.clientY-r.top)/r.height)*2+1;
+  ray.setFromCamera(ptr, camera);
+}
+function planePoint(){
+  const v = new THREE.Vector3();
+  return ray.ray.intersectPlane(dragPlane, v) ? v : null;
+}
+function clampPt(v){
+  v.x = Math.min(W/2-.4, Math.max(-W/2+.4, v.x));
+  v.z = Math.min(D/2-.4, Math.max(-D/2+.4, v.z));
+  return v;
+}
+function pickItem(){
+  const hits = ray.intersectObjects(buildingGroup.children, true);
+  for(const h of hits){
+    let o = h.object;
+    while(o && o.userData.itemId===undefined) o = o.parent;
+    if(o && o.userData.itemId!==undefined) return o.userData.itemId;
+  }
+  return null;
+}
+
+renderer.domElement.addEventListener('pointerdown', e=>{
+  if(e.button!==0) return;
+  ptrUpdate(e); downPos = {x:e.clientX,y:e.clientY}; moved = false;
+  if(ui.placing) return;
+  const id = pickItem();
+  if(id!==null && ui.mode!=='all'){
+    ui.selected = id; renderPanel(); updateSelRing();
+    dragging = state.items.find(i=>i.id===id);
+    controls.enabled = false;
+    renderer.domElement.setPointerCapture(e.pointerId);
+  }
+});
+renderer.domElement.addEventListener('pointermove', e=>{
+  ptrUpdate(e);
+  if(downPos && (Math.abs(e.clientX-downPos.x)>4 || Math.abs(e.clientY-downPos.y)>4)) moved = true;
+  if(ui.placing && ghost){
+    const p = planePoint(); if(p){ clampPt(p); ghost.position.set(p.x,0,p.z); }
+    return;
+  }
+  if(dragging){
+    const p = planePoint();
+    if(p){
+      clampPt(p);
+      dragging.x = +p.x.toFixed(2); dragging.z = +p.z.toFixed(2);
+      const g = itemGroups.get(dragging.id);
+      if(g) g.position.set(dragging.x,0,dragging.z);
+      updateSelRing();
+      requestCableRefresh();
+      renderPanel(true);
+    }
+  }
+});
+renderer.domElement.addEventListener('pointerup', e=>{
+  if(ui.placing){
+    if(!moved){
+      ptrUpdate(e);
+      const p = planePoint();
+      if(p && ui.mode!=='all'){
+        clampPt(p);
+        addItem(ui.placing, +p.x.toFixed(2), +p.z.toFixed(2));
+        if(!e.shiftKey) stopPlacing();
+      }
+    }
+    downPos = null;
+    return;
+  }
+  if(dragging){ save(); }
+  else if(!moved){
+    // click empty space -> deselect
+    const id = pickItem();
+    if(id===null){ ui.selected = null; renderPanel(); updateSelRing(); }
+    else if(ui.mode==='all'){ ui.selected = id; renderPanel(); updateSelRing(); }
+  }
+  dragging = null; controls.enabled = true; downPos = null;
+});
+
+let cableRAF = 0;
+function requestCableRefresh(){
+  if(cableRAF) return;
+  cableRAF = requestAnimationFrame(()=>{ cableRAF=0; rebuildCables(); });
+}
+
+/* ---------- mutations ---------- */
+function addItem(type, x, z){
+  const item = {
+    id: state.nextId++, type, name: TYPE_LABEL[type], floor: ui.floor, x, z, rot: 0,
+    lan:0, tel:0, power:0, fax:0, ext:'', note:'', lanNo:'', telNo:'', ...(TYPE_DEFAULT_SVC[type]||{})
+  };
+  const count = state.items.filter(i=>i.type===type).length + 1;
+  item.name = TYPE_LABEL[type] + ' ' + count;
+  state.items.push(item);
+  ui.selected = item.id;
+  save(); rebuildScene(); renderPanel();
+  toast('วาง "' + item.name + '" แล้ว' + (ui.placing ? ' · Shift ค้างเพื่อวางต่อ' : ''));
+}
+function deleteSel(){
+  const it = getSel(); if(!it) return;
+  state.items = state.items.filter(i=>i.id!==it.id);
+  ui.selected = null;
+  save(); rebuildScene(); renderPanel();
+}
+function duplicateSel(){
+  const it = getSel(); if(!it) return;
+  const cp = {...it, id: state.nextId++, x: it.x+.9, z: it.z+.4, name: it.name+' (copy)'};
+  clampPt(cp);
+  state.items.push(cp);
+  ui.selected = cp.id;
+  save(); rebuildScene(); renderPanel();
+}
+function rotateSel(){
+  const it = getSel(); if(!it) return;
+  it.rot = (it.rot+45)%360;
+  const g = itemGroups.get(it.id);
+  if(g) g.rotation.y = -it.rot*Math.PI/180;
+  save(); renderPanel(true);
+}
+
+/* ---------- placing ghost ---------- */
+function startPlacing(type){
+  if(ui.mode==='all'){ toast('เลือกชั้นก่อน แล้วค่อยวางอุปกรณ์'); return; }
+  stopPlacing();
+  ui.placing = type;
+  ghost = new THREE.Group();
+  (BUILDERS[type]||BUILDERS.outlet)(ghost);
+  ghost.traverse(o=>{
+    if(o.isMesh){ o.material = o.material.clone(); o.material.transparent = true; o.material.opacity = .45; o.castShadow=false; }
+  });
+  ghost.position.set(0,0,0);
+  scene.add(ghost);
+  document.querySelectorAll('.pal button').forEach(b=>b.classList.toggle('armed', b.dataset.type===type));
+}
+function stopPlacing(){
+  ui.placing = null;
+  if(ghost){ scene.remove(ghost); ghost = null; }
+  document.querySelectorAll('.pal button').forEach(b=>b.classList.remove('armed'));
+}
+
+/* ---------- keyboard ---------- */
+addEventListener('keydown', e=>{
+  if(e.target.tagName==='INPUT' || e.target.tagName==='SELECT') return;
+  if(e.key==='Escape'){ stopPlacing(); ui.selected=null; renderPanel(); updateSelRing(); }
+  if(e.key==='Delete' || e.key==='Backspace'){ deleteSel(); }
+  if(e.key==='r' || e.key==='R'){ rotateSel(); }
+  if((e.ctrlKey||e.metaKey) && (e.key==='d'||e.key==='D')){ e.preventDefault(); duplicateSel(); }
+});
+
+/* ---------- UI: palette ---------- */
+const PAL_GROUPS = [
+  ['เฟอร์นิเจอร์', ['workstation','desk','meeting','chair','cabinet','wall']],
+  ['อุปกรณ์ IT', ['monitor','pc','printer','wifi']],
+  ['ระบบสาย', ['outlet','rack','panel']],
+];
+const GLYPHS = {
+  workstation:'<div style="position:absolute;left:2px;top:8px;width:22px;height:4px;background:#9c7c55;border-radius:1px"></div><div style="position:absolute;left:6px;top:1px;width:12px;height:7px;background:#3f4c66;border-radius:1px"></div>',
+  desk:'<div style="position:absolute;left:2px;top:8px;width:22px;height:4px;background:#9c7c55;border-radius:1px"></div><div style="position:absolute;left:4px;top:12px;width:2px;height:7px;background:#5c667a"></div><div style="position:absolute;right:4px;top:12px;width:2px;height:7px;background:#5c667a"></div>',
+  meeting:'<div style="position:absolute;left:1px;top:6px;width:24px;height:9px;background:#7a6244;border-radius:4px"></div>',
+  chair:'<div style="position:absolute;left:8px;top:8px;width:10px;height:8px;background:#3a4252;border-radius:2px"></div><div style="position:absolute;left:8px;top:2px;width:10px;height:5px;background:#4a5468;border-radius:2px"></div>',
+  cabinet:'<div style="position:absolute;left:8px;top:1px;width:10px;height:18px;background:#77818f;border-radius:1px"></div>',
+  monitor:'<div style="position:absolute;left:5px;top:3px;width:16px;height:10px;background:#3f4c66;border-radius:1px"></div><div style="position:absolute;left:12px;top:13px;width:2px;height:5px;background:#5c667a"></div>',
+  pc:'<div style="position:absolute;left:10px;top:2px;width:7px;height:16px;background:#3a4150;border-radius:1px"></div>',
+  printer:'<div style="position:absolute;left:6px;top:5px;width:14px;height:11px;background:#c8ccd6;border-radius:1px"></div><div style="position:absolute;left:8px;top:2px;width:10px;height:3px;background:#3a4150"></div>',
+  wifi:'<div style="position:absolute;left:12px;top:6px;width:2px;height:13px;background:#5c667a"></div><div style="position:absolute;left:7px;top:2px;width:12px;height:4px;background:#e8eaf0;border-radius:2px"></div>',
+  outlet:'<div style="position:absolute;left:8px;top:7px;width:10px;height:7px;background:#23262e;border:1px solid #5c667a;border-radius:1px"></div><div style="position:absolute;left:4px;top:16px;width:4px;height:3px;background:#3b82f6;border-radius:1px"></div><div style="position:absolute;left:10px;top:16px;width:4px;height:3px;background:#f59e0b;border-radius:1px"></div>',
+  rack:'<div style="position:absolute;left:9px;top:1px;width:9px;height:18px;background:#14171f;border:1px solid #38415a;border-radius:1px"></div><div style="position:absolute;left:11px;top:4px;width:5px;height:2px;background:#3b82f6"></div><div style="position:absolute;left:11px;top:8px;width:5px;height:2px;background:#22c55e"></div>',
+  panel:'<div style="position:absolute;left:9px;top:3px;width:9px;height:12px;background:#a8afc0;border-radius:1px"></div>',
+  wall:'<div style="position:absolute;left:2px;top:4px;width:22px;height:12px;background:rgba(170,180,200,.35);border:1px solid #5c667a;border-radius:1px"></div>',
+};
+const palEl = document.getElementById('palette');
+palEl.innerHTML = PAL_GROUPS.map(([h,types]) =>
+  '<div class="pal-h">'+h+'</div><div class="pal">'+
+  types.map(t=>'<button data-type="'+t+'"><span class="glyph">'+(GLYPHS[t]||'')+'</span>'+TYPE_LABEL[t]+'</button>').join('')+
+  '</div>'
+).join('');
+palEl.addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  if(ui.placing===b.dataset.type) stopPlacing(); else startPlacing(b.dataset.type);
+});
+
+/* ---------- UI: tabs / toggles ---------- */
+const tabsEl = document.getElementById('tabs');
+function renderTabs(){
+  tabsEl.querySelectorAll('button').forEach(b=>{
+    const on = (b.dataset.f==='all') ? ui.mode==='all' : (ui.mode==='floor' && +b.dataset.f===ui.floor);
+    b.classList.toggle('on', on);
+  });
+}
+tabsEl.addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  stopPlacing();
+  if(b.dataset.f==='all'){ ui.mode='all'; }
+  else { ui.mode='floor'; ui.floor=+b.dataset.f; }
+  setCam(ui.mode);
+  renderTabs(); rebuildScene();
+});
+renderTabs();
+
+document.getElementById('toggles').addEventListener('click', e=>{
+  const t = e.target.closest('.tgl'); if(!t) return;
+  const k = t.dataset.t;
+  ui.show[k] = !ui.show[k];
+  t.classList.toggle('on', ui.show[k]);
+  if(k==='labels'){
+    itemGroups.forEach(g=>g.traverse(o=>{ if(o.userData.isLabel) o.visible = ui.show.labels; }));
+  } else rebuildCables();
+});
+
+/* ---------- UI: properties panel ---------- */
+const propsEl = document.getElementById('props');
+function renderPanel(soft){
+  const it = getSel();
+  if(!it){ propsEl.classList.remove('open'); propsEl.innerHTML=''; return; }
+  if(soft && propsEl.classList.contains('open')){
+    const px = propsEl.querySelector('[data-k="x"]'), pz = propsEl.querySelector('[data-k="z"]'), pr = propsEl.querySelector('[data-k="rot"]');
+    if(px && document.activeElement!==px) px.value = it.x;
+    if(pz && document.activeElement!==pz) pz.value = it.z;
+    if(pr && document.activeElement!==pr) pr.value = it.rot;
+    return;
+  }
+  propsEl.classList.add('open');
+  propsEl.innerHTML =
+    '<div class="pr-type">'+TYPE_LABEL[it.type].toUpperCase()+' · #'+it.id+'</div>'+
+    '<div class="pr-row"><label>ชื่อ</label><input data-k="name" value="'+esc(it.name)+'"></div>'+
+    '<div class="pr-grid">'+
+      '<div class="pr-row"><label>ชั้น</label><select data-k="floor">'+FLOORS.map(f=>'<option value="'+f.id+'"'+(f.id===it.floor?' selected':'')+'>'+f.name+'</option>').join('')+'</select></div>'+
+      '<div class="pr-row"><label>หมุน (°)</label><input data-k="rot" type="number" step="15" value="'+it.rot+'"></div>'+
+      '<div class="pr-row"><label>X (ม.)</label><input data-k="x" type="number" step="0.1" value="'+it.x+'"></div>'+
+      '<div class="pr-row"><label>Z (ม.)</label><input data-k="z" type="number" step="0.1" value="'+it.z+'"></div>'+
+    '</div>'+
+    '<div class="pr-row"><label>เบอร์ EXT</label><input data-k="ext" value="'+esc(it.ext)+'" placeholder="เช่น 14 หรือ 22,23"></div>'+
+    '<div class="pr-grid">'+
+      '<div class="pr-row"><label><i style="display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;background:#3b82f6"></i>เลขสาย LAN</label><input data-k="lanNo" value="'+esc(it.lanNo)+'" placeholder="เช่น 1F-03"></div>'+
+      '<div class="pr-row"><label><i style="display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;background:#22c55e"></i>เลขสาย TEL</label><input data-k="telNo" value="'+esc(it.telNo)+'" placeholder="ค่าว่าง = ใช้ EXT"></div>'+
+    '</div>'+
+    '<div class="pr-h" style="margin-top:14px; font-size:11px; font-weight:700; color:var(--dim)">จุดลงสาย (จำนวนเส้น)</div>'+
+    '<div class="svc">'+SVC.map(s=>
+      '<div class="pr-row"><label><i style="background:#'+SVC_COLOR[s].toString(16).padStart(6,'0')+'"></i>'+SVC_LABEL[s]+'</label><input data-k="'+s+'" type="number" min="0" max="6" value="'+(it[s]||0)+'"></div>'
+    ).join('')+'</div>'+
+    '<div class="pr-row"><label>หมายเหตุ</label><input data-k="note" value="'+esc(it.note)+'"></div>'+
+    '<div class="pr-btns">'+
+      '<button data-act="rot">หมุน 45°</button>'+
+      '<button data-act="dup">สำเนา</button>'+
+      '<button data-act="del" class="del">ลบ</button>'+
+    '</div>';
+}
+function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+propsEl.addEventListener('input', e=>{
+  const it = getSel(); if(!it) return;
+  const k = e.target.dataset.k; if(!k) return;
+  let v = e.target.value;
+  if(['x','z','rot'].includes(k)) v = +v||0;
+  if(SVC.includes(k)) v = Math.max(0, Math.min(6, +v||0));
+  if(k==='floor') v = +v;
+  it[k] = v;
+  save();
+  if(k==='floor'){ rebuildScene(); renderPanel(); }
+  else if(['name','ext','lanNo','telNo'].includes(k)){
+    const g = itemGroups.get(it.id);
+    if(g){
+      g.traverse(o=>{ if(o.userData.isLabel){ g.remove(o); } });
+      const lab = makeLabel(it); lab.position.y = LABEL_H[it.type]||1.5; lab.visible = ui.show.labels;
+      g.add(lab);
+    }
+    renderStats();
+  }
+  else if(SVC.includes(k)){ rebuildItemMesh(it); rebuildCables(); renderStats(); }
+  else {
+    const g = itemGroups.get(it.id);
+    if(g){ g.position.set(it.x, floorY(it.floor), it.z); g.rotation.y = -it.rot*Math.PI/180; }
+    updateSelRing(); requestCableRefresh();
+  }
+});
+function rebuildItemMesh(it){
+  const old = itemGroups.get(it.id);
+  if(old) buildingGroup.remove(old);
+  const g = buildItemGroup(it);
+  buildingGroup.add(g); itemGroups.set(it.id, g);
+}
+propsEl.addEventListener('click', e=>{
+  const act = e.target.dataset?.act;
+  if(act==='del') deleteSel();
+  if(act==='dup') duplicateSel();
+  if(act==='rot') rotateSel();
+});
+
+/* ---------- stats ---------- */
+const statsEl = document.getElementById('stats');
+function renderStats(){
+  const fl = ui.mode==='all' ? state.items : state.items.filter(i=>i.floor===ui.floor);
+  const sum = s => fl.reduce((a,i)=>a+(i[s]||0),0);
+  const scope = ui.mode==='all' ? 'ทั้งอาคาร' : FLOORS[ui.floor-1].name;
+  statsEl.innerHTML =
+    '<b>'+scope+'</b> · อุปกรณ์ '+fl.length+' ชิ้น<br>'+
+    SVC.map(s=>'<span class="s"><i style="background:#'+SVC_COLOR[s].toString(16).padStart(6,'0')+'"></i>'+SVC_LABEL[s]+' <b>'+sum(s)+'</b></span>').join('');
+}
+
+/* ---------- toast ---------- */
+let toastT;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.opacity = 1;
+  clearTimeout(toastT); toastT = setTimeout(()=>t.style.opacity=0, 2200);
+}
+
+/* ---------- export ---------- */
+function download(name, text, type){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text],{type}));
+  a.download = name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+}
+document.getElementById('exportJson').onclick = ()=>{
+  download('osth-office-layout.json', JSON.stringify({
+    version:1, exportedAt:new Date().toISOString(), floors:FLOORS, items:state.items
+  }, null, 2), 'application/json');
+};
+document.getElementById('exportSql').onclick = ()=>{
+  const q = s => "'" + String(s??'').replace(/'/g,"''") + "'";
+  let sql = '-- OSTH office layout · export ' + new Date().toISOString() + '\n' +
+    'PRAGMA foreign_keys = ON;\n\n' +
+    'CREATE TABLE IF NOT EXISTS floors (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL\n);\n\n' +
+    'CREATE TABLE IF NOT EXISTS items (\n  id INTEGER PRIMARY KEY,\n  floor_id INTEGER NOT NULL REFERENCES floors(id),\n  type TEXT NOT NULL,\n  name TEXT NOT NULL,\n  x REAL NOT NULL,\n  z REAL NOT NULL,\n  rot REAL NOT NULL DEFAULT 0,\n  lan INTEGER NOT NULL DEFAULT 0,\n  tel INTEGER NOT NULL DEFAULT 0,\n  power INTEGER NOT NULL DEFAULT 0,\n  fax INTEGER NOT NULL DEFAULT 0,\n  ext TEXT,\n  lan_no TEXT,\n  tel_no TEXT,\n  note TEXT\n);\n\n' +
+    'DELETE FROM items;\nDELETE FROM floors;\n\n' +
+    FLOORS.map(f=>'INSERT INTO floors (id, name) VALUES ('+f.id+', '+q(f.name)+');').join('\n') + '\n\n' +
+    state.items.map(i=>'INSERT INTO items VALUES ('+[i.id,i.floor,q(i.type),q(i.name),i.x,i.z,i.rot,i.lan||0,i.tel||0,i.power||0,i.fax||0,q(i.ext),q(i.lanNo),q(i.telNo),q(i.note)].join(', ')+');').join('\n') + '\n';
+  download('osth-office-layout.sql', sql, 'text/plain');
+};
+document.getElementById('reset').onclick = ()=>{
+  if(!confirm('ล้างผังปัจจุบันและกลับไปใช้ข้อมูลจากไฟล์ Excel?')) return;
+  const items = seedItems();
+  state = { items, nextId: Math.max(...items.map(i=>i.id))+1 };
+  ui.selected = null;
+  save(); rebuildScene(); renderPanel();
+  toast('รีเซ็ตเรียบร้อย');
+};
+
+/* ---------- loop ---------- */
+rebuildScene();
+(function loop(){
+  requestAnimationFrame(loop);
+  controls.update();
+  renderer.render(scene, camera);
+})();
+</script>
+<template id="__bundler_thumbnail">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#101318"/><rect x="30" y="55" width="40" height="8" fill="#4f7df3"/><rect x="30" y="43" width="40" height="8" fill="#3a4c78"/><rect x="30" y="31" width="40" height="8" fill="#2a3652"/><circle cx="50" cy="70" r="3" fill="#22c55e"/></svg>
+</template>
+</body>
+</html>
