@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-24T05:26:45.413Z",
+  "exportedAt": "2026-08-24T05:28:10.113Z",
   "floors": [
     {
       "id": 1,
@@ -529,7 +529,7 @@
     {
       "id": 60,
       "type": "monitor",
-      "name": "จอมอนิเตอร์ 1",
+      "name": "Monitor",
       "floor": 1,
       "x": -6.79,
       "z": 0.46,
@@ -546,10 +546,27 @@
     {
       "id": 61,
       "type": "monitor",
-      "name": "จอมอนิเตอร์ 1 (copy)",
+      "name": "Monitor",
       "floor": 1,
       "x": -6.76,
-      "z": 3.29,
+      "z": 3.3,
+      "rot": 90,
+      "lan": 0,
+      "tel": 0,
+      "power": 0,
+      "fax": 0,
+      "ext": "",
+      "note": "",
+      "lanNo": "",
+      "telNo": ""
+    },
+    {
+      "id": 62,
+      "type": "pc",
+      "name": "เครื่องคอม 1",
+      "floor": 1,
+      "x": -6.82,
+      "z": 1.67,
       "rot": 90,
       "lan": 0,
       "tel": 0,
