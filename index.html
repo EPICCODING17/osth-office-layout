@@ -50,6 +50,8 @@
   .actions button{border:1px solid var(--line); background:var(--panel2); color:var(--text); font:inherit; font-size:11.5px; font-weight:600; padding:5px 9px; border-radius:7px; cursor:pointer; white-space:nowrap}
   .actions button:hover{background:#232a37}
   .actions button.warn{color:#f0a0a0}
+  .actions button:disabled{opacity:.35; cursor:default}
+  .actions button:disabled:hover{background:var(--panel2)}
   #body{display:flex; flex:1; min-height:0}
   aside.palette{width:190px; background:var(--panel); border-right:1px solid var(--line); padding:10px; overflow-y:auto; flex-shrink:0}
   .pal-h{font-size:11px; font-weight:700; color:var(--dim); letter-spacing:.06em; margin:10px 4px 6px}
@@ -98,6 +100,7 @@
   .pr-row label{display:block; font-size:11px; font-weight:600; color:var(--dim); margin-bottom:4px}
   .pr-row input,.pr-row select{width:100%; background:var(--panel2); border:1px solid var(--line); color:var(--text); font:inherit; font-size:13px; border-radius:7px; padding:6px 8px}
   .pr-row input:focus,.pr-row select:focus{outline:none; border-color:var(--accent)}
+  .pr-row input:disabled{opacity:.4; cursor:not-allowed}
   .pr-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px}
   .svc{display:grid; grid-template-columns:1fr 1fr; gap:8px}
   .svc .pr-row label i{display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:5px; vertical-align:0}
@@ -126,6 +129,8 @@
       <div class="tgl on" data-t="labels"><span class="dot" style="background:#8b93a5"></span>ป้ายชื่อ</div>
     </div>
     <div class="actions">
+      <button id="undoBtn" title="เลิกทำ (Ctrl+Z)" disabled>↶ เลิกทำ</button>
+      <button id="redoBtn" title="ทำซ้ำ (Ctrl+Shift+Z)" disabled>↷ ทำซ้ำ</button>
       <span id="ghStatus" class="gh-status"></span>
       <button id="ghSetup" title="ตั้งค่า GitHub token">GitHub</button>
       <button id="exportJson">Export JSON</button>
@@ -153,7 +158,7 @@
     <main>
       <div id="stage"></div>
       <div id="stats"></div>
-      <div id="hint">คลิกอุปกรณ์ด้านซ้ายแล้วคลิกวางบนพื้น · Shift ค้าง = วางต่อเนื่อง · ลากย้าย · Shift+ลากบนพื้น = เลือกทั้งชุด · R หมุน · Ctrl+D ทำสำเนา · Delete ลบ</div>
+      <div id="hint">คลิกอุปกรณ์ด้านซ้ายแล้วคลิกวางบนพื้น · Shift ค้าง = วางต่อเนื่อง · ลากย้าย · Shift+ลากบนพื้น = เลือกทั้งชุด · R หมุน · Ctrl+D ทำสำเนา · Delete ลบ · Ctrl+Z เลิกทำ · Ctrl+Shift+Z ทำซ้ำ</div>
       <div id="toast"></div>
     </main>
     <aside class="props" id="props"></aside>
@@ -277,7 +282,7 @@ const TYPE_DEFAULT_SVC = {
 function seedItems(){
   let id = 1;
   const it = (type,name,floor,x,z,rot=0,ex={}) => ({
-    id:id++, type, name, floor, x, z, rot, labelOn:true,
+    id:id++, type, name, floor, x, z, rot, labelOn:true, locked:false,
     lan:0, tel:0, power:0, fax:0, ext:'', note:'', lanNo:'', telNo:'',
     ...(TYPE_DEFAULT_SVC[type]||{}), ...ex
   });
@@ -355,6 +360,53 @@ function save(){
   state.updatedAt = Date.now();
   clearTimeout(saveT); saveT = setTimeout(persistLocal, 200);
   scheduleGhPush();
+}
+
+/* ---------- undo / redo ---------- */
+const UNDO_LIMIT = 50;
+let undoStack = [], redoStack = [];
+function snapshotState(){ return { items: JSON.parse(JSON.stringify(state.items)), nextId: state.nextId }; }
+function pushUndo(){
+  undoStack.push(snapshotState());
+  if(undoStack.length>UNDO_LIMIT) undoStack.shift();
+  redoStack.length = 0;
+  updateUndoRedoUI();
+}
+function applySnapshot(snap){
+  state.items = snap.items; state.nextId = snap.nextId;
+  ui.selected = null; ui.selectedMulti.clear();
+  save(); rebuildScene(); renderPanel();
+}
+function undo(){
+  if(!undoStack.length) return;
+  redoStack.push(snapshotState());
+  applySnapshot(undoStack.pop());
+  updateUndoRedoUI();
+  toast('เลิกทำ');
+}
+function redo(){
+  if(!redoStack.length) return;
+  undoStack.push(snapshotState());
+  applySnapshot(redoStack.pop());
+  updateUndoRedoUI();
+  toast('ทำซ้ำ');
+}
+function updateUndoRedoUI(){
+  const u = document.getElementById('undoBtn'), r = document.getElementById('redoBtn');
+  if(u) u.disabled = undoStack.length===0;
+  if(r) r.disabled = redoStack.length===0;
+}
+let pendingFieldUndo = null;
+function flushPendingFieldUndo(){
+  if(!pendingFieldUndo) return;
+  const changed = JSON.stringify(pendingFieldUndo.items)!==JSON.stringify(state.items);
+  if(changed){
+    undoStack.push(pendingFieldUndo);
+    if(undoStack.length>UNDO_LIMIT) undoStack.shift();
+    redoStack.length = 0;
+    updateUndoRedoUI();
+  }
+  pendingFieldUndo = null;
 }
 
 const ui = { floor:1, mode:'floor', show:{lan:true,tel:true,power:true,fax:true,labels:true}, selected:null, selectedMulti:new Set(), placing:null };
@@ -533,7 +585,7 @@ function svcStuds(g, item){
 
 /* ---------- labels ---------- */
 function makeLabel(item){
-  const line1 = item.name;
+  const line1 = (item.locked ? '🔒 ' : '') + item.name;
   const segs = [];
   const telDisp = (item.telNo||'').trim() || (item.ext||'').trim();
   if(item.lan && (item.lanNo||'').trim()) segs.push(['LAN ' + item.lanNo, '#6ea3ff']);
@@ -723,6 +775,7 @@ const dragPlane = new THREE.Plane(new THREE.Vector3(0,1,0), 0);
 let dragging = null, ghost = null, downPos = null, moved = false;
 let draggingGroup = null, groupOrigin = null;
 let marquee = null, marqueeEl = null;
+let dragUndoPushed = false, groupDragUndoPushed = false;
 
 function ptrUpdate(e){
   const r = renderer.domElement.getBoundingClientRect();
@@ -749,12 +802,18 @@ function pickItem(){
   return null;
 }
 
-function startGroupDrag(e){
+function startGroupDrag(e, clickedId){
+  const clickedItem = state.items.find(i=>i.id===clickedId);
+  if(clickedItem && clickedItem.locked){
+    toast('ชิ้นนี้ล็อกตำแหน่งอยู่ · ปลดล็อกก่อนถึงจะย้ายได้');
+    return;
+  }
   draggingGroup = [...ui.selectedMulti].map(id=>{
     const item = state.items.find(i=>i.id===id);
-    return { item, x0:item.x, z0:item.z };
+    return { item, x0:item.x, z0:item.z, locked: !!item.locked };
   });
   groupOrigin = planePoint();
+  groupDragUndoPushed = false;
   controls.enabled = false;
   renderer.domElement.setPointerCapture(e.pointerId);
 }
@@ -796,7 +855,7 @@ renderer.domElement.addEventListener('pointerdown', e=>{
   const id = pickItem();
   if(id!==null && ui.mode!=='all'){
     if(ui.selectedMulti.size>1 && ui.selectedMulti.has(id)){
-      startGroupDrag(e);
+      startGroupDrag(e, id);
     } else if(e.shiftKey){
       if(ui.selectedMulti.size<=1 && ui.selected!==null) ui.selectedMulti.add(ui.selected);
       if(ui.selectedMulti.has(id)) ui.selectedMulti.delete(id); else ui.selectedMulti.add(id);
@@ -806,9 +865,15 @@ renderer.domElement.addEventListener('pointerdown', e=>{
     } else {
       ui.selectedMulti.clear();
       ui.selected = id; renderPanel(); updateSelRing();
-      dragging = state.items.find(i=>i.id===id);
-      controls.enabled = false;
-      renderer.domElement.setPointerCapture(e.pointerId);
+      const item = state.items.find(i=>i.id===id);
+      if(item && item.locked){
+        toast('ชิ้นนี้ล็อกตำแหน่งอยู่ · ปลดล็อกก่อนถึงจะย้ายได้');
+      } else {
+        dragging = item;
+        dragUndoPushed = false;
+        controls.enabled = false;
+        renderer.domElement.setPointerCapture(e.pointerId);
+      }
     }
   } else if(id===null && ui.mode!=='all' && e.shiftKey){
     startMarquee(e);
@@ -825,8 +890,10 @@ renderer.domElement.addEventListener('pointermove', e=>{
   if(draggingGroup){
     const p = planePoint();
     if(p && groupOrigin){
+      if(!groupDragUndoPushed && draggingGroup.some(entry=>!entry.locked)){ pushUndo(); groupDragUndoPushed = true; }
       const dx = p.x - groupOrigin.x, dz = p.z - groupOrigin.z;
       draggingGroup.forEach(entry=>{
+        if(entry.locked) return;
         const np = clampPt(new THREE.Vector3(entry.x0+dx, 0, entry.z0+dz));
         entry.item.x = +np.x.toFixed(2); entry.item.z = +np.z.toFixed(2);
         const g = itemGroups.get(entry.item.id);
@@ -840,6 +907,7 @@ renderer.domElement.addEventListener('pointermove', e=>{
   if(dragging){
     const p = planePoint();
     if(p){
+      if(!dragUndoPushed){ pushUndo(); dragUndoPushed = true; }
       clampPt(p);
       dragging.x = +p.x.toFixed(2); dragging.z = +p.z.toFixed(2);
       const g = itemGroups.get(dragging.id);
@@ -884,8 +952,9 @@ function requestCableRefresh(){
 
 /* ---------- mutations ---------- */
 function addItem(type, x, z){
+  pushUndo();
   const item = {
-    id: state.nextId++, type, name: TYPE_LABEL[type], floor: ui.floor, x, z, rot: 0, labelOn:true,
+    id: state.nextId++, type, name: TYPE_LABEL[type], floor: ui.floor, x, z, rot: 0, labelOn:true, locked:false,
     lan:0, tel:0, power:0, fax:0, ext:'', note:'', lanNo:'', telNo:'', ...(TYPE_DEFAULT_SVC[type]||{})
   };
   const count = state.items.filter(i=>i.type===type).length + 1;
@@ -897,12 +966,14 @@ function addItem(type, x, z){
 }
 function deleteSel(){
   const it = getSel(); if(!it) return;
+  pushUndo();
   state.items = state.items.filter(i=>i.id!==it.id);
   ui.selected = null;
   save(); rebuildScene(); renderPanel();
 }
 function duplicateSel(){
   const it = getSel(); if(!it) return;
+  pushUndo();
   const cp = {...it, id: state.nextId++, x: it.x+.9, z: it.z+.4, name: it.name+' (copy)'};
   clampPt(cp);
   state.items.push(cp);
@@ -911,6 +982,7 @@ function duplicateSel(){
 }
 function rotateSel(){
   const it = getSel(); if(!it) return;
+  pushUndo();
   it.rot = (it.rot+45)%360;
   const g = itemGroups.get(it.id);
   if(g) g.rotation.y = -it.rot*Math.PI/180;
@@ -918,12 +990,14 @@ function rotateSel(){
 }
 function deleteMulti(){
   if(ui.selectedMulti.size<=1) return;
+  pushUndo();
   state.items = state.items.filter(i=>!ui.selectedMulti.has(i.id));
   ui.selectedMulti.clear(); ui.selected = null;
   save(); rebuildScene(); renderPanel();
 }
 function duplicateMulti(){
   if(ui.selectedMulti.size<=1) return;
+  pushUndo();
   const copies = [];
   [...ui.selectedMulti].forEach(id=>{
     const it = state.items.find(i=>i.id===id); if(!it) return;
@@ -936,6 +1010,7 @@ function duplicateMulti(){
 }
 function rotateMulti(){
   if(ui.selectedMulti.size<=1) return;
+  pushUndo();
   ui.selectedMulti.forEach(id=>{
     const it = state.items.find(i=>i.id===id); if(!it) return;
     it.rot = (it.rot+45)%360;
@@ -972,6 +1047,8 @@ addEventListener('keydown', e=>{
   if(e.key==='Delete' || e.key==='Backspace'){ if(ui.selectedMulti.size>1) deleteMulti(); else deleteSel(); }
   if(e.key==='r' || e.key==='R'){ if(ui.selectedMulti.size>1) rotateMulti(); else rotateSel(); }
   if((e.ctrlKey||e.metaKey) && (e.key==='d'||e.key==='D')){ e.preventDefault(); if(ui.selectedMulti.size>1) duplicateMulti(); else duplicateSel(); }
+  if((e.ctrlKey||e.metaKey) && !e.shiftKey && (e.key==='z'||e.key==='Z')){ e.preventDefault(); undo(); }
+  if((e.ctrlKey||e.metaKey) && (e.shiftKey && (e.key==='z'||e.key==='Z') || e.key==='y'||e.key==='Y')){ e.preventDefault(); redo(); }
 });
 
 /* ---------- UI: palette ---------- */
@@ -1044,6 +1121,7 @@ document.getElementById('toggles').addEventListener('click', e=>{
 /* ---------- UI: properties panel ---------- */
 const propsEl = document.getElementById('props');
 function renderPanel(soft){
+  if(!soft) flushPendingFieldUndo();
   if(ui.selectedMulti.size>1){ renderBulkPanel(); return; }
   const it = getSel();
   if(!it){ propsEl.classList.remove('open'); propsEl.innerHTML=''; return; }
@@ -1058,12 +1136,15 @@ function renderPanel(soft){
   propsEl.innerHTML =
     '<div class="pr-type">'+TYPE_LABEL[it.type].toUpperCase()+' · #'+it.id+'</div>'+
     '<div class="pr-row"><label>ชื่อ</label><input data-k="name" value="'+esc(it.name)+'"></div>'+
-    '<div class="pr-row"><div class="tgl'+(it.labelOn!==false?' on':'')+'" data-act="toggleLabel" style="width:100%; justify-content:center"><span class="dot" style="background:#8b93a5"></span>แสดงป้ายชื่อ</div></div>'+
+    '<div class="pr-grid">'+
+      '<div class="pr-row"><div class="tgl'+(it.labelOn!==false?' on':'')+'" data-act="toggleLabel" style="width:100%; justify-content:center"><span class="dot" style="background:#8b93a5"></span>ป้ายชื่อ</div></div>'+
+      '<div class="pr-row"><div class="tgl'+(it.locked?' on':'')+'" data-act="toggleLock" style="width:100%; justify-content:center"><span class="dot" style="background:'+(it.locked?'#f59e0b':'#8b93a5')+'"></span>'+(it.locked?'🔒 ล็อกแล้ว':'ล็อกตำแหน่ง')+'</div></div>'+
+    '</div>'+
     '<div class="pr-grid">'+
       '<div class="pr-row"><label>ชั้น</label><select data-k="floor">'+FLOORS.map(f=>'<option value="'+f.id+'"'+(f.id===it.floor?' selected':'')+'>'+f.name+'</option>').join('')+'</select></div>'+
       '<div class="pr-row"><label>หมุน (°)</label><input data-k="rot" type="number" step="15" value="'+it.rot+'"></div>'+
-      '<div class="pr-row"><label>X (ม.)</label><input data-k="x" type="number" step="0.1" value="'+it.x+'"></div>'+
-      '<div class="pr-row"><label>Z (ม.)</label><input data-k="z" type="number" step="0.1" value="'+it.z+'"></div>'+
+      '<div class="pr-row"><label>X (ม.)</label><input data-k="x" type="number" step="0.1" value="'+it.x+'"'+(it.locked?' disabled':'')+'></div>'+
+      '<div class="pr-row"><label>Z (ม.)</label><input data-k="z" type="number" step="0.1" value="'+it.z+'"'+(it.locked?' disabled':'')+'></div>'+
     '</div>'+
     '<div class="pr-row"><label>เบอร์ EXT</label><input data-k="ext" value="'+esc(it.ext)+'" placeholder="เช่น 14 หรือ 22,23"></div>'+
     '<div class="pr-grid">'+
@@ -1094,9 +1175,16 @@ function renderBulkPanel(){
     '</div>';
 }
 function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+propsEl.addEventListener('focusin', e=>{
+  if(e.target.dataset && e.target.dataset.k) pendingFieldUndo = snapshotState();
+});
+propsEl.addEventListener('change', e=>{
+  if(e.target.dataset && e.target.dataset.k) flushPendingFieldUndo();
+});
 propsEl.addEventListener('input', e=>{
   const it = getSel(); if(!it) return;
   const k = e.target.dataset.k; if(!k) return;
+  if(it.locked && (k==='x'||k==='z')) return;
   let v = e.target.value;
   if(['x','z','rot'].includes(k)) v = +v||0;
   if(SVC.includes(k)) v = Math.max(0, Math.min(6, +v||0));
@@ -1135,6 +1223,7 @@ propsEl.addEventListener('click', e=>{
   if(act==='dupAll') duplicateMulti();
   if(act==='rotAll') rotateMulti();
   if(act==='toggleLabel') toggleSelLabel();
+  if(act==='toggleLock') toggleSelLocked();
 });
 function toggleSelLabel(){
   const it = getSel(); if(!it) return;
@@ -1143,6 +1232,14 @@ function toggleSelLabel(){
   const g = itemGroups.get(it.id);
   if(g) g.traverse(o=>{ if(o.userData.isLabel) o.visible = ui.show.labels && it.labelOn!==false; });
   renderPanel();
+}
+function toggleSelLocked(){
+  const it = getSel(); if(!it) return;
+  it.locked = !it.locked;
+  save();
+  rebuildItemMesh(it);
+  renderPanel();
+  toast(it.locked ? 'ล็อกตำแหน่งแล้ว' : 'ปลดล็อกแล้ว');
 }
 
 /* ---------- stats ---------- */
@@ -1171,6 +1268,8 @@ function download(name, text, type){
   a.download = name; a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
 }
+document.getElementById('undoBtn').onclick = undo;
+document.getElementById('redoBtn').onclick = redo;
 document.getElementById('exportJson').onclick = ()=>{
   download('osth-office-layout.json', JSON.stringify(buildExportPayload(), null, 2), 'application/json');
 };
@@ -1179,14 +1278,15 @@ document.getElementById('exportSql').onclick = ()=>{
   let sql = '-- OSTH office layout · export ' + new Date().toISOString() + '\n' +
     'PRAGMA foreign_keys = ON;\n\n' +
     'CREATE TABLE IF NOT EXISTS floors (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL\n);\n\n' +
-    'CREATE TABLE IF NOT EXISTS items (\n  id INTEGER PRIMARY KEY,\n  floor_id INTEGER NOT NULL REFERENCES floors(id),\n  type TEXT NOT NULL,\n  name TEXT NOT NULL,\n  x REAL NOT NULL,\n  z REAL NOT NULL,\n  rot REAL NOT NULL DEFAULT 0,\n  lan INTEGER NOT NULL DEFAULT 0,\n  tel INTEGER NOT NULL DEFAULT 0,\n  power INTEGER NOT NULL DEFAULT 0,\n  fax INTEGER NOT NULL DEFAULT 0,\n  ext TEXT,\n  lan_no TEXT,\n  tel_no TEXT,\n  note TEXT,\n  label_on INTEGER NOT NULL DEFAULT 1\n);\n\n' +
+    'CREATE TABLE IF NOT EXISTS items (\n  id INTEGER PRIMARY KEY,\n  floor_id INTEGER NOT NULL REFERENCES floors(id),\n  type TEXT NOT NULL,\n  name TEXT NOT NULL,\n  x REAL NOT NULL,\n  z REAL NOT NULL,\n  rot REAL NOT NULL DEFAULT 0,\n  lan INTEGER NOT NULL DEFAULT 0,\n  tel INTEGER NOT NULL DEFAULT 0,\n  power INTEGER NOT NULL DEFAULT 0,\n  fax INTEGER NOT NULL DEFAULT 0,\n  ext TEXT,\n  lan_no TEXT,\n  tel_no TEXT,\n  note TEXT,\n  label_on INTEGER NOT NULL DEFAULT 1,\n  locked INTEGER NOT NULL DEFAULT 0\n);\n\n' +
     'DELETE FROM items;\nDELETE FROM floors;\n\n' +
     FLOORS.map(f=>'INSERT INTO floors (id, name) VALUES ('+f.id+', '+q(f.name)+');').join('\n') + '\n\n' +
-    state.items.map(i=>'INSERT INTO items VALUES ('+[i.id,i.floor,q(i.type),q(i.name),i.x,i.z,i.rot,i.lan||0,i.tel||0,i.power||0,i.fax||0,q(i.ext),q(i.lanNo),q(i.telNo),q(i.note),i.labelOn===false?0:1].join(', ')+');').join('\n') + '\n';
+    state.items.map(i=>'INSERT INTO items VALUES ('+[i.id,i.floor,q(i.type),q(i.name),i.x,i.z,i.rot,i.lan||0,i.tel||0,i.power||0,i.fax||0,q(i.ext),q(i.lanNo),q(i.telNo),q(i.note),i.labelOn===false?0:1,i.locked?1:0].join(', ')+');').join('\n') + '\n';
   download('osth-office-layout.sql', sql, 'text/plain');
 };
 document.getElementById('reset').onclick = ()=>{
   if(!confirm('ล้างผังปัจจุบันและกลับไปใช้ข้อมูลจากไฟล์ Excel?')) return;
+  pushUndo();
   const items = seedItems();
   state = { items, nextId: Math.max(...items.map(i=>i.id))+1 };
   ui.selected = null; ui.selectedMulti.clear();
