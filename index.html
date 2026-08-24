@@ -246,7 +246,7 @@ async function ghTryAdoptRemote(){
     const pendingLocalEdit = hasToken && (state.updatedAt||0) > (state.ghSyncedAt||0);
     if(pendingLocalEdit) return;                                   // don't clobber unsynced edits — next debounce will push them
     if(hasToken && remoteAt <= (state.ghSyncedAt||0)) return;       // this browser is already caught up
-    remote.items.forEach(i=>{ if(i.lanNo===undefined) i.lanNo=''; if(i.telNo===undefined) i.telNo=''; });
+    remote.items.forEach(i=>{ if(i.lanNo===undefined) i.lanNo=''; if(i.telNo===undefined) i.telNo=''; if(i.labelOn===undefined) i.labelOn=true; });
     state.items = remote.items;
     state.nextId = Math.max(1, ...remote.items.map(i=>i.id)) + 1;
     state.ghSyncedAt = remoteAt || Date.now();
@@ -277,7 +277,7 @@ const TYPE_DEFAULT_SVC = {
 function seedItems(){
   let id = 1;
   const it = (type,name,floor,x,z,rot=0,ex={}) => ({
-    id:id++, type, name, floor, x, z, rot,
+    id:id++, type, name, floor, x, z, rot, labelOn:true,
     lan:0, tel:0, power:0, fax:0, ext:'', note:'', lanNo:'', telNo:'',
     ...(TYPE_DEFAULT_SVC[type]||{}), ...ex
   });
@@ -341,7 +341,7 @@ function load(){
   try{
     const raw = localStorage.getItem(LS_KEY);
     if(raw){ const s = JSON.parse(raw); if(Array.isArray(s.items)){
-      s.items.forEach(i=>{ if(i.lanNo===undefined) i.lanNo=''; if(i.telNo===undefined) i.telNo=''; });
+      s.items.forEach(i=>{ if(i.lanNo===undefined) i.lanNo=''; if(i.telNo===undefined) i.telNo=''; if(i.labelOn===undefined) i.labelOn=true; });
       if(!s.items.some(i=>(i.lanNo||'').trim())) numberCables(s.items);
       return s;
     } }
@@ -618,7 +618,7 @@ function buildItemGroup(item){
   const lab = makeLabel(item);
   lab.position.y = LABEL_H[item.type]||1.5;
   if((item.lanNo||'').trim() || (item.telNo||item.ext||'').trim()) lab.position.y += .12;
-  lab.visible = ui.show.labels;
+  lab.visible = ui.show.labels && item.labelOn!==false;
   g.add(lab);
   g.rotation.y = -item.rot*Math.PI/180;
   g.position.set(item.x, floorY(item.floor), item.z);
@@ -885,7 +885,7 @@ function requestCableRefresh(){
 /* ---------- mutations ---------- */
 function addItem(type, x, z){
   const item = {
-    id: state.nextId++, type, name: TYPE_LABEL[type], floor: ui.floor, x, z, rot: 0,
+    id: state.nextId++, type, name: TYPE_LABEL[type], floor: ui.floor, x, z, rot: 0, labelOn:true,
     lan:0, tel:0, power:0, fax:0, ext:'', note:'', lanNo:'', telNo:'', ...(TYPE_DEFAULT_SVC[type]||{})
   };
   const count = state.items.filter(i=>i.type===type).length + 1;
@@ -1033,7 +1033,11 @@ document.getElementById('toggles').addEventListener('click', e=>{
   ui.show[k] = !ui.show[k];
   t.classList.toggle('on', ui.show[k]);
   if(k==='labels'){
-    itemGroups.forEach(g=>g.traverse(o=>{ if(o.userData.isLabel) o.visible = ui.show.labels; }));
+    itemGroups.forEach(g=>{
+      const it = state.items.find(i=>i.id===g.userData.itemId);
+      const on = ui.show.labels && (!it || it.labelOn!==false);
+      g.traverse(o=>{ if(o.userData.isLabel) o.visible = on; });
+    });
   } else rebuildCables();
 });
 
@@ -1054,6 +1058,7 @@ function renderPanel(soft){
   propsEl.innerHTML =
     '<div class="pr-type">'+TYPE_LABEL[it.type].toUpperCase()+' · #'+it.id+'</div>'+
     '<div class="pr-row"><label>ชื่อ</label><input data-k="name" value="'+esc(it.name)+'"></div>'+
+    '<div class="pr-row"><div class="tgl'+(it.labelOn!==false?' on':'')+'" data-act="toggleLabel" style="width:100%; justify-content:center"><span class="dot" style="background:#8b93a5"></span>แสดงป้ายชื่อ</div></div>'+
     '<div class="pr-grid">'+
       '<div class="pr-row"><label>ชั้น</label><select data-k="floor">'+FLOORS.map(f=>'<option value="'+f.id+'"'+(f.id===it.floor?' selected':'')+'>'+f.name+'</option>').join('')+'</select></div>'+
       '<div class="pr-row"><label>หมุน (°)</label><input data-k="rot" type="number" step="15" value="'+it.rot+'"></div>'+
@@ -1122,14 +1127,23 @@ function rebuildItemMesh(it){
   buildingGroup.add(g); itemGroups.set(it.id, g);
 }
 propsEl.addEventListener('click', e=>{
-  const act = e.target.dataset?.act;
+  const act = e.target.closest('[data-act]')?.dataset.act;
   if(act==='del') deleteSel();
   if(act==='dup') duplicateSel();
   if(act==='rot') rotateSel();
   if(act==='delAll') deleteMulti();
   if(act==='dupAll') duplicateMulti();
   if(act==='rotAll') rotateMulti();
+  if(act==='toggleLabel') toggleSelLabel();
 });
+function toggleSelLabel(){
+  const it = getSel(); if(!it) return;
+  it.labelOn = it.labelOn===false;
+  save();
+  const g = itemGroups.get(it.id);
+  if(g) g.traverse(o=>{ if(o.userData.isLabel) o.visible = ui.show.labels && it.labelOn!==false; });
+  renderPanel();
+}
 
 /* ---------- stats ---------- */
 const statsEl = document.getElementById('stats');
@@ -1165,10 +1179,10 @@ document.getElementById('exportSql').onclick = ()=>{
   let sql = '-- OSTH office layout · export ' + new Date().toISOString() + '\n' +
     'PRAGMA foreign_keys = ON;\n\n' +
     'CREATE TABLE IF NOT EXISTS floors (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL\n);\n\n' +
-    'CREATE TABLE IF NOT EXISTS items (\n  id INTEGER PRIMARY KEY,\n  floor_id INTEGER NOT NULL REFERENCES floors(id),\n  type TEXT NOT NULL,\n  name TEXT NOT NULL,\n  x REAL NOT NULL,\n  z REAL NOT NULL,\n  rot REAL NOT NULL DEFAULT 0,\n  lan INTEGER NOT NULL DEFAULT 0,\n  tel INTEGER NOT NULL DEFAULT 0,\n  power INTEGER NOT NULL DEFAULT 0,\n  fax INTEGER NOT NULL DEFAULT 0,\n  ext TEXT,\n  lan_no TEXT,\n  tel_no TEXT,\n  note TEXT\n);\n\n' +
+    'CREATE TABLE IF NOT EXISTS items (\n  id INTEGER PRIMARY KEY,\n  floor_id INTEGER NOT NULL REFERENCES floors(id),\n  type TEXT NOT NULL,\n  name TEXT NOT NULL,\n  x REAL NOT NULL,\n  z REAL NOT NULL,\n  rot REAL NOT NULL DEFAULT 0,\n  lan INTEGER NOT NULL DEFAULT 0,\n  tel INTEGER NOT NULL DEFAULT 0,\n  power INTEGER NOT NULL DEFAULT 0,\n  fax INTEGER NOT NULL DEFAULT 0,\n  ext TEXT,\n  lan_no TEXT,\n  tel_no TEXT,\n  note TEXT,\n  label_on INTEGER NOT NULL DEFAULT 1\n);\n\n' +
     'DELETE FROM items;\nDELETE FROM floors;\n\n' +
     FLOORS.map(f=>'INSERT INTO floors (id, name) VALUES ('+f.id+', '+q(f.name)+');').join('\n') + '\n\n' +
-    state.items.map(i=>'INSERT INTO items VALUES ('+[i.id,i.floor,q(i.type),q(i.name),i.x,i.z,i.rot,i.lan||0,i.tel||0,i.power||0,i.fax||0,q(i.ext),q(i.lanNo),q(i.telNo),q(i.note)].join(', ')+');').join('\n') + '\n';
+    state.items.map(i=>'INSERT INTO items VALUES ('+[i.id,i.floor,q(i.type),q(i.name),i.x,i.z,i.rot,i.lan||0,i.tel||0,i.power||0,i.fax||0,q(i.ext),q(i.lanNo),q(i.telNo),q(i.note),i.labelOn===false?0:1].join(', ')+');').join('\n') + '\n';
   download('osth-office-layout.sql', sql, 'text/plain');
 };
 document.getElementById('reset').onclick = ()=>{
