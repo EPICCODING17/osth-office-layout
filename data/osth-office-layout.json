@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-24T05:40:55.498Z",
+  "exportedAt": "2026-08-24T06:16:33.655Z",
   "floors": [
     {
       "id": 1,
@@ -32,15 +32,16 @@
       "note": "",
       "lanNo": "1F-18",
       "telNo": "",
-      "labelOn": true
+      "labelOn": true,
+      "locked": true
     },
     {
       "id": 22,
       "type": "wifi",
       "name": "Wifi New 1",
       "floor": 1,
-      "x": 7.6,
-      "z": -4.5,
+      "x": 6.51,
+      "z": -4.75,
       "rot": 0,
       "lan": 1,
       "tel": 0,
@@ -86,7 +87,8 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": true
+      "labelOn": true,
+      "locked": true
     },
     {
       "id": 25,
@@ -104,7 +106,8 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": true
+      "labelOn": true,
+      "locked": true
     },
     {
       "id": 26,
@@ -518,7 +521,8 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": true
+      "labelOn": true,
+      "locked": true
     },
     {
       "id": 58,
@@ -644,7 +648,8 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": false
+      "labelOn": false,
+      "locked": true
     },
     {
       "id": 66,
@@ -662,7 +667,8 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": false
+      "labelOn": false,
+      "locked": true
     },
     {
       "id": 67,
@@ -680,7 +686,8 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": false
+      "labelOn": false,
+      "locked": true
     },
     {
       "id": 68,
@@ -698,7 +705,8 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": false
+      "labelOn": false,
+      "locked": true
     },
     {
       "id": 69,
@@ -716,7 +724,8 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": false
+      "labelOn": false,
+      "locked": true
     },
     {
       "id": 70,
@@ -734,7 +743,8 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": false
+      "labelOn": false,
+      "locked": true
     },
     {
       "id": 71,
