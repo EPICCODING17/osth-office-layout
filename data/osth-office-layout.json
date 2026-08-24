@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-24T09:15:08.330Z",
+  "exportedAt": "2026-08-24T09:16:13.245Z",
   "floors": [
     {
       "id": 1,
@@ -1128,7 +1128,7 @@
     {
       "id": 90,
       "type": "desk",
-      "name": " (copy)",
+      "name": "",
       "floor": 1,
       "x": 1.3,
       "z": 3.19,
@@ -1142,12 +1142,12 @@
       "lanNo": "",
       "telNo": "",
       "labelOn": false,
-      "locked": false
+      "locked": true
     },
     {
       "id": 91,
       "type": "desk",
-      "name": " (copy)",
+      "name": "",
       "floor": 1,
       "x": 0.25,
       "z": 2.84,
@@ -1161,12 +1161,12 @@
       "lanNo": "",
       "telNo": "",
       "labelOn": false,
-      "locked": false
+      "locked": true
     },
     {
       "id": 92,
       "type": "desk",
-      "name": " (copy) (copy)",
+      "name": "",
       "floor": 1,
       "x": 3.74,
       "z": 3.2,
@@ -1180,12 +1180,12 @@
       "lanNo": "",
       "telNo": "",
       "labelOn": false,
-      "locked": false
+      "locked": true
     },
     {
       "id": 93,
       "type": "desk",
-      "name": " (copy) (copy)",
+      "name": " ",
       "floor": 1,
       "x": 2.69,
       "z": 2.85,
@@ -1199,7 +1199,45 @@
       "lanNo": "",
       "telNo": "",
       "labelOn": false,
-      "locked": false
+      "locked": true
+    },
+    {
+      "id": 94,
+      "type": "desk",
+      "name": "",
+      "floor": 1,
+      "x": 5.22,
+      "z": 3.01,
+      "rot": 0,
+      "labelOn": false,
+      "locked": false,
+      "lan": 0,
+      "tel": 0,
+      "power": 0,
+      "fax": 0,
+      "ext": "",
+      "note": "",
+      "lanNo": "",
+      "telNo": ""
+    },
+    {
+      "id": 95,
+      "type": "desk",
+      "name": " (copy)",
+      "floor": 1,
+      "x": 6.23,
+      "z": 2.82,
+      "rot": 0,
+      "labelOn": false,
+      "locked": false,
+      "lan": 0,
+      "tel": 0,
+      "power": 0,
+      "fax": 0,
+      "ext": "",
+      "note": "",
+      "lanNo": "",
+      "telNo": ""
     }
   ]
 }
