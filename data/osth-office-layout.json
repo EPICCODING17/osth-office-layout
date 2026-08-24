@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-24T04:17:30.258Z",
+  "exportedAt": "2026-08-24T05:02:39.174Z",
   "floors": [
     {
       "id": 1,
@@ -350,6 +350,23 @@
       "lan": 0,
       "tel": 0,
       "power": 0,
+      "fax": 0,
+      "ext": "",
+      "note": "",
+      "lanNo": "",
+      "telNo": ""
+    },
+    {
+      "id": 41,
+      "type": "workstation",
+      "name": "โต๊ะทำงาน + คอม 5",
+      "floor": 1,
+      "x": -1.35,
+      "z": 2.96,
+      "rot": 0,
+      "lan": 1,
+      "tel": 1,
+      "power": 1,
       "fax": 0,
       "ext": "",
       "note": "",
