@@ -49,6 +49,18 @@ machine you used it on is ever compromised.
 A browser with no token configured is read-only: it always loads the latest
 GitHub data but never pushes.
 
+## Multi-select
+
+- **Shift + click** an item — toggles it in/out of the current selection
+  (click a few items one at a time to build up a group).
+- **Shift + drag** on empty floor — rubber-band select everything inside the
+  box.
+- Drag any item that's part of the current selection — the whole group
+  moves together, keeping their relative positions.
+- With 2+ items selected, the right panel switches to bulk actions: rotate
+  all 45° (each in place, not around a shared pivot), duplicate all, delete
+  all. The same keyboard shortcuts (R, Ctrl+D, Delete) act on the group too.
+
 ## Structure
 
 - `index.html` — the app (UI + Three.js scene + all logic, single file)
@@ -87,3 +99,11 @@ infrastructure items added directly in the app, not sourced from Excel.
 ## TODO / ideas
 
 - (nothing queued yet — add features/bugs here as they come up)
+
+## Changelog
+
+- **2026-08-24** — GitHub auto-sync (PAT token, debounced push, load-on-open);
+  multi-select (Shift+click / Shift+drag, group move, bulk rotate/duplicate/
+  delete); two new furniture types (L-shape workstation, L-shape empty desk);
+  fixed the workstation chair facing away from the desk (affected the
+  original `workstation()` builder too, not just the new L-shape one).
