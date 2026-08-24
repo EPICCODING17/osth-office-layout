@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-24T05:39:49.262Z",
+  "exportedAt": "2026-08-24T05:40:55.498Z",
   "floors": [
     {
       "id": 1,
@@ -644,7 +644,7 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": true
+      "labelOn": false
     },
     {
       "id": 66,
@@ -662,7 +662,7 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": true
+      "labelOn": false
     },
     {
       "id": 67,
@@ -680,7 +680,7 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": true
+      "labelOn": false
     },
     {
       "id": 68,
@@ -698,14 +698,14 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": true
+      "labelOn": false
     },
     {
       "id": 69,
       "type": "desk",
       "name": "",
       "floor": 1,
-      "x": -2.56,
+      "x": -2.55,
       "z": 2.68,
       "rot": 90,
       "lan": 0,
@@ -734,12 +734,12 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": true
+      "labelOn": false
     },
     {
       "id": 71,
       "type": "outlet",
-      "name": "จุดปลั๊ก/เต้ารับ 3",
+      "name": "Free",
       "floor": 1,
       "x": -3.82,
       "z": -0.67,
