@@ -1,5 +1,9 @@
 # OSTH Office Layout — 3D LAN/TEL/POWER/FAX Planner
 
+**Live:** https://epiccoding17.github.io/osth-office-layout/ (public GitHub
+Pages — contains real employee names + phone extensions, confirmed OK to
+publish 2026-08-24)
+
 Single-page 3D visual planner for OSTH's office cabling layout (LAN, telephone,
 power, fax) across 3 floors. Built with Three.js (loaded from CDN via import
 map — no build step, no dependencies to install).
