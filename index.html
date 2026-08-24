@@ -68,6 +68,28 @@
   #stats .s{display:inline-flex; align-items:center; gap:5px; margin-right:12px}
   #stats .s i{width:8px; height:8px; border-radius:2px; display:inline-block}
   #toast{position:absolute; top:14px; left:50%; transform:translateX(-50%); background:#232a37; border:1px solid #38415a; color:var(--text); border-radius:8px; padding:7px 16px; font-size:12.5px; opacity:0; transition:opacity .25s; pointer-events:none}
+  .gh-status{display:flex; align-items:center; gap:6px; font-size:11.5px; font-weight:600; color:var(--dim); white-space:nowrap}
+  .gh-status .dot{width:7px; height:7px; border-radius:50%; background:#5c667a; flex-shrink:0}
+  .gh-status.saving .dot{background:var(--power); animation:ghPulse 1s ease-in-out infinite}
+  .gh-status.saved .dot{background:var(--tel)}
+  .gh-status.error .dot{background:var(--fax)}
+  @keyframes ghPulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .gh-modal-wrap{position:fixed; inset:0; z-index:50; display:flex; align-items:center; justify-content:center; background:rgba(9,10,13,.6); opacity:0; transition:opacity .18s cubic-bezier(.4,0,.2,1); backdrop-filter:blur(3px)}
+  .gh-modal-wrap[hidden]{display:none}
+  .gh-modal-wrap.open{opacity:1}
+  .gh-modal{width:380px; max-width:calc(100vw - 32px); background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:18px 20px; box-shadow:0 24px 64px rgba(0,0,0,.45); transform:translateY(10px) scale(.98); transition:transform .18s cubic-bezier(.16,1,.3,1)}
+  .gh-modal-wrap.open .gh-modal{transform:translateY(0) scale(1)}
+  .gh-modal h2{font-size:14.5px; font-weight:700; margin-bottom:8px}
+  .gh-modal p{font-size:12px; color:var(--dim); line-height:1.6; margin-bottom:12px}
+  .gh-modal p.gh-link{margin-top:-6px}
+  .gh-modal input{width:100%; background:var(--panel2); border:1px solid var(--line); color:var(--text); font:inherit; font-size:13px; border-radius:7px; padding:8px 10px; margin-bottom:10px}
+  .gh-modal input:focus{outline:none; border-color:var(--accent)}
+  .gh-modal .row{display:flex; gap:8px}
+  .gh-modal button{flex:1; border:1px solid var(--line); background:var(--panel2); color:var(--text); font:inherit; font-size:12.5px; font-weight:600; padding:8px 0; border-radius:7px; cursor:pointer}
+  .gh-modal button:hover{background:#232a37}
+  .gh-modal button.primary{background:var(--accent); border-color:var(--accent); color:#fff}
+  .gh-modal button.primary:hover{background:#3f6de0}
+  .gh-modal button.danger{color:#f0a0a0; border-color:#4a2a2e}
   aside.props{width:250px; background:var(--panel); border-left:1px solid var(--line); padding:12px; overflow-y:auto; flex-shrink:0; display:none}
   aside.props.open{display:block}
   .pr-type{font-size:11px; font-weight:700; color:var(--dim); letter-spacing:.05em}
@@ -103,11 +125,28 @@
       <div class="tgl on" data-t="labels"><span class="dot" style="background:#8b93a5"></span>ป้ายชื่อ</div>
     </div>
     <div class="actions">
+      <span id="ghStatus" class="gh-status"></span>
+      <button id="ghSetup" title="ตั้งค่า GitHub token">GitHub</button>
       <button id="exportJson">Export JSON</button>
       <button id="exportSql">Export SQL</button>
       <button id="reset" class="warn" title="ล้างผังและกลับไปใช้ข้อมูลจาก Excel">รีเซ็ต</button>
     </div>
   </header>
+  <div id="ghModal" class="gh-modal-wrap" hidden>
+    <div class="gh-modal">
+      <h2>เชื่อมต่อ GitHub เพื่อบันทึกอัตโนมัติ</h2>
+      <p>วาง GitHub Personal Access Token (แบบ fine-grained) ที่จำกัดสิทธิ์แค่ repo
+        <b>osth-office-layout</b> เท่านั้น กับสิทธิ์ <b>Contents: Read and write</b> —
+        เก็บไว้ในเบราว์เซอร์นี้เครื่องเดียว ไม่ส่งไปที่อื่นนอกจาก GitHub API โดยตรง</p>
+      <input id="ghTokenInput" type="password" placeholder="github_pat_…" autocomplete="off">
+      <p class="gh-link"><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">สร้าง token ใหม่ →</a></p>
+      <div class="row">
+        <button id="ghClearToken" class="danger">ลบ token</button>
+        <button id="ghSaveToken" class="primary">บันทึก</button>
+      </div>
+      <div class="row" style="margin-top:8px"><button id="ghModalClose">ปิด</button></div>
+    </div>
+  </div>
   <div id="body">
     <aside class="palette" id="palette"></aside>
     <main>
@@ -126,6 +165,96 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 /* ---------- data ---------- */
 const LS_KEY = 'osth-office-3d-v1';
+
+/* ---------- GitHub auto-sync ---------- */
+const GH_OWNER = 'EPICCODING17';
+const GH_REPO = 'osth-office-layout';
+const GH_BRANCH = 'main';
+const GH_DATA_PATH = 'data/osth-office-layout.json';
+const GH_TOKEN_KEY = 'osth-gh-token';
+const GH_PUSH_DEBOUNCE_MS = 4000;
+
+function ghToken(){ try{ return localStorage.getItem(GH_TOKEN_KEY) || ''; }catch(e){ return ''; } }
+function setGhToken(t){ try{ if(t) localStorage.setItem(GH_TOKEN_KEY, t); else localStorage.removeItem(GH_TOKEN_KEY); }catch(e){} }
+function b64EncodeUtf8(str){
+  const bytes = new TextEncoder().encode(str);
+  let bin = ''; bytes.forEach(b=> bin += String.fromCharCode(b));
+  return btoa(bin);
+}
+function buildExportPayload(){
+  return { version:1, exportedAt:new Date().toISOString(), floors:FLOORS, items:state.items };
+}
+
+const ghStatusEl = document.getElementById('ghStatus');
+function setGhStatus(kind, text){
+  ghStatusEl.className = 'gh-status ' + kind;
+  ghStatusEl.innerHTML = '<span class="dot"></span>' + text;
+}
+function ghStatusIdle(){
+  if(!ghToken()) setGhStatus('off', 'GitHub: ยังไม่เชื่อม');
+  else setGhStatus('idle', 'GitHub: พร้อมซิงก์');
+}
+
+let ghPushT, ghPushing = false, ghQueued = false;
+async function ghPushNow(){
+  const token = ghToken();
+  if(!token){ ghStatusIdle(); return; }
+  if(ghPushing){ ghQueued = true; return; }
+  ghPushing = true;
+  setGhStatus('saving', 'GitHub: กำลังบันทึก…');
+  try{
+    const api = 'https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+GH_DATA_PATH;
+    const headers = { 'Authorization':'Bearer '+token, 'Accept':'application/vnd.github+json' };
+    const getRes = await fetch(api+'?ref='+GH_BRANCH, { headers });
+    if(!getRes.ok) throw new Error('อ่านไฟล์เดิมไม่ได้ (' + getRes.status + ')');
+    const cur = await getRes.json();
+    const content = b64EncodeUtf8(JSON.stringify(buildExportPayload(), null, 2));
+    const putRes = await fetch(api, {
+      method:'PUT', headers: Object.assign({'Content-Type':'application/json'}, headers),
+      body: JSON.stringify({ message:'Update layout · '+new Date().toISOString(), content, sha:cur.sha, branch:GH_BRANCH })
+    });
+    if(!putRes.ok){
+      const err = await putRes.json().catch(()=>({}));
+      throw new Error(err.message || ('บันทึกไม่สำเร็จ (' + putRes.status + ')'));
+    }
+    state.ghSyncedAt = Date.now();
+    persistLocal();
+    setGhStatus('saved', 'GitHub: บันทึกแล้ว ' + new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}));
+  }catch(e){
+    setGhStatus('error', 'GitHub: ' + e.message);
+    toast('ซิงก์ GitHub ไม่สำเร็จ: ' + e.message);
+  }finally{
+    ghPushing = false;
+    if(ghQueued){ ghQueued = false; ghPushNow(); }
+  }
+}
+function scheduleGhPush(){
+  if(!ghToken()) return;
+  clearTimeout(ghPushT);
+  ghPushT = setTimeout(ghPushNow, GH_PUSH_DEBOUNCE_MS);
+}
+async function ghTryAdoptRemote(){
+  try{
+    const url = 'https://raw.githubusercontent.com/'+GH_OWNER+'/'+GH_REPO+'/'+GH_BRANCH+'/'+GH_DATA_PATH+'?t='+Date.now();
+    const res = await fetch(url, { cache:'no-store' });
+    if(!res.ok) return;
+    const remote = await res.json();
+    if(!Array.isArray(remote.items)) return;
+    const remoteAt = Date.parse(remote.exportedAt||'') || 0;
+    const hasToken = !!ghToken();
+    const pendingLocalEdit = hasToken && (state.updatedAt||0) > (state.ghSyncedAt||0);
+    if(pendingLocalEdit) return;                                   // don't clobber unsynced edits — next debounce will push them
+    if(hasToken && remoteAt <= (state.ghSyncedAt||0)) return;       // this browser is already caught up
+    remote.items.forEach(i=>{ if(i.lanNo===undefined) i.lanNo=''; if(i.telNo===undefined) i.telNo=''; });
+    state.items = remote.items;
+    state.nextId = Math.max(1, ...remote.items.map(i=>i.id)) + 1;
+    state.ghSyncedAt = remoteAt || Date.now();
+    persistLocal();
+    ui.selected = null;
+    rebuildScene(); renderPanel();
+    if(hasToken) setGhStatus('saved', 'GitHub: ซิงก์แล้ว');
+  }catch(e){ /* offline / blocked — keep whatever is local */ }
+}
 const FLOORS = [{id:1,name:'ชั้น 1'},{id:2,name:'ชั้น 2'},{id:3,name:'ชั้น 3'}];
 const W = 17, D = 11;               // floor size (m)
 const FLOOR_GAP = 4.2;              // stacked view spacing
@@ -219,8 +348,13 @@ function load(){
   const items = seedItems();
   return { items, nextId: Math.max(...items.map(i=>i.id))+1 };
 }
+function persistLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){} }
 let saveT;
-function save(){ clearTimeout(saveT); saveT = setTimeout(()=>localStorage.setItem(LS_KEY, JSON.stringify(state)), 200); }
+function save(){
+  state.updatedAt = Date.now();
+  clearTimeout(saveT); saveT = setTimeout(persistLocal, 200);
+  scheduleGhPush();
+}
 
 const ui = { floor:1, mode:'floor', show:{lan:true,tel:true,power:true,fax:true,labels:true}, selected:null, placing:null };
 
@@ -857,9 +991,7 @@ function download(name, text, type){
   setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
 }
 document.getElementById('exportJson').onclick = ()=>{
-  download('osth-office-layout.json', JSON.stringify({
-    version:1, exportedAt:new Date().toISOString(), floors:FLOORS, items:state.items
-  }, null, 2), 'application/json');
+  download('osth-office-layout.json', JSON.stringify(buildExportPayload(), null, 2), 'application/json');
 };
 document.getElementById('exportSql').onclick = ()=>{
   const q = s => "'" + String(s??'').replace(/'/g,"''") + "'";
@@ -881,8 +1013,38 @@ document.getElementById('reset').onclick = ()=>{
   toast('รีเซ็ตเรียบร้อย');
 };
 
+/* ---------- UI: GitHub modal ---------- */
+const ghModalWrap = document.getElementById('ghModal');
+const ghTokenInput = document.getElementById('ghTokenInput');
+function openGhModal(){
+  ghTokenInput.value = ghToken();
+  ghModalWrap.hidden = false;
+  requestAnimationFrame(()=> ghModalWrap.classList.add('open'));
+}
+function closeGhModal(){
+  ghModalWrap.classList.remove('open');
+  setTimeout(()=>{ ghModalWrap.hidden = true; }, 180);
+}
+document.getElementById('ghSetup').onclick = openGhModal;
+document.getElementById('ghModalClose').onclick = closeGhModal;
+ghModalWrap.addEventListener('click', e=>{ if(e.target===ghModalWrap) closeGhModal(); });
+addEventListener('keydown', e=>{ if(e.key==='Escape' && !ghModalWrap.hidden) closeGhModal(); });
+document.getElementById('ghSaveToken').onclick = ()=>{
+  const v = ghTokenInput.value.trim();
+  setGhToken(v);
+  ghStatusIdle();
+  closeGhModal();
+  if(v){ toast('เชื่อม GitHub แล้ว'); ghPushNow(); }
+};
+document.getElementById('ghClearToken').onclick = ()=>{
+  setGhToken(''); ghTokenInput.value = ''; ghStatusIdle();
+  toast('ยกเลิกการเชื่อมต่อ GitHub แล้ว');
+};
+
 /* ---------- loop ---------- */
 rebuildScene();
+ghStatusIdle();
+ghTryAdoptRemote();
 (function loop(){
   requestAnimationFrame(loop);
   controls.update();
