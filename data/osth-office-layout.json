@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-24T04:15:57.940Z",
+  "exportedAt": "2026-08-24T04:17:30.258Z",
   "floors": [
     {
       "id": 1,
@@ -21,8 +21,8 @@
       "type": "printer",
       "name": "Old Fuji Xerox",
       "floor": 1,
-      "x": -2.89,
-      "z": -2.87,
+      "x": -2.9,
+      "z": -3.95,
       "rot": 0,
       "lan": 1,
       "tel": 0,
@@ -325,11 +325,28 @@
     {
       "id": 39,
       "type": "desk",
-      "name": "โต๊ะเปล่า 3",
+      "name": "Kanuang",
       "floor": 1,
       "x": -6.51,
       "z": 0.78,
       "rot": 0,
+      "lan": 0,
+      "tel": 0,
+      "power": 0,
+      "fax": 0,
+      "ext": "",
+      "note": "",
+      "lanNo": "",
+      "telNo": ""
+    },
+    {
+      "id": 40,
+      "type": "desk",
+      "name": "Kanuang",
+      "floor": 1,
+      "x": -6.16,
+      "z": 1.82,
+      "rot": 90,
       "lan": 0,
       "tel": 0,
       "power": 0,
