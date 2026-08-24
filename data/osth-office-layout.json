@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-24T06:23:33.490Z",
+  "exportedAt": "2026-08-24T09:07:17.578Z",
   "floors": [
     {
       "id": 1,
@@ -522,8 +522,8 @@
       "type": "wifi",
       "name": "WiFi AP 3",
       "floor": 1,
-      "x": -1.49,
-      "z": 0.49,
+      "x": -1.47,
+      "z": 2.49,
       "rot": 0,
       "lan": 1,
       "tel": 0,
@@ -534,7 +534,7 @@
       "lanNo": "",
       "telNo": "",
       "labelOn": true,
-      "locked": true
+      "locked": false
     },
     {
       "id": 58,
@@ -1002,6 +1002,44 @@
       "rot": 90,
       "labelOn": false,
       "locked": true,
+      "lan": 0,
+      "tel": 0,
+      "power": 0,
+      "fax": 0,
+      "ext": "",
+      "note": "",
+      "lanNo": "",
+      "telNo": ""
+    },
+    {
+      "id": 84,
+      "type": "monitor",
+      "name": "",
+      "floor": 1,
+      "x": -3.85,
+      "z": -0.16,
+      "rot": 90,
+      "labelOn": false,
+      "locked": true,
+      "lan": 0,
+      "tel": 0,
+      "power": 0,
+      "fax": 0,
+      "ext": "",
+      "note": "",
+      "lanNo": "",
+      "telNo": ""
+    },
+    {
+      "id": 85,
+      "type": "monitor",
+      "name": " ",
+      "floor": 1,
+      "x": -3.88,
+      "z": 1.32,
+      "rot": 90,
+      "labelOn": false,
+      "locked": false,
       "lan": 0,
       "tel": 0,
       "power": 0,
