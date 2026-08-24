@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-24T04:14:45.544Z",
+  "exportedAt": "2026-08-24T04:15:57.940Z",
   "floors": [
     {
       "id": 1,
@@ -291,7 +291,7 @@
     {
       "id": 37,
       "type": "desk",
-      "name": "",
+      "name": "Thep",
       "floor": 1,
       "x": -6.52,
       "z": -0.09,
@@ -308,11 +308,28 @@
     {
       "id": 38,
       "type": "desk",
-      "name": "",
+      "name": "Thep",
       "floor": 1,
       "x": -6.17,
       "z": -1.1,
       "rot": 90,
+      "lan": 0,
+      "tel": 0,
+      "power": 0,
+      "fax": 0,
+      "ext": "",
+      "note": "",
+      "lanNo": "",
+      "telNo": ""
+    },
+    {
+      "id": 39,
+      "type": "desk",
+      "name": "โต๊ะเปล่า 3",
+      "floor": 1,
+      "x": -6.51,
+      "z": 0.78,
+      "rot": 0,
       "lan": 0,
       "tel": 0,
       "power": 0,
