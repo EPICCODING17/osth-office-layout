@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-24T05:36:16.791Z",
+  "exportedAt": "2026-08-24T05:37:43.098Z",
   "floors": [
     {
       "id": 1,
@@ -309,8 +309,8 @@
       "type": "desk",
       "name": "",
       "floor": 1,
-      "x": -7.22,
-      "z": 1.55,
+      "x": -7.21,
+      "z": 1.54,
       "rot": 0,
       "lan": 0,
       "tel": 0,
@@ -356,7 +356,7 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": true
+      "labelOn": false
     },
     {
       "id": 49,
@@ -374,7 +374,7 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": true
+      "labelOn": false
     },
     {
       "id": 50,
@@ -500,7 +500,7 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": true
+      "labelOn": false
     },
     {
       "id": 57,
@@ -590,7 +590,7 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": true
+      "labelOn": false
     },
     {
       "id": 62,
@@ -608,7 +608,7 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": true
+      "labelOn": false
     },
     {
       "id": 63,
@@ -626,7 +626,7 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": true
+      "labelOn": false
     },
     {
       "id": 65,
@@ -735,6 +735,24 @@
       "lanNo": "",
       "telNo": "",
       "labelOn": true
+    },
+    {
+      "id": 71,
+      "type": "outlet",
+      "name": "จุดปลั๊ก/เต้ารับ 3",
+      "floor": 1,
+      "x": -3.79,
+      "z": -0.68,
+      "rot": 0,
+      "labelOn": true,
+      "lan": 1,
+      "tel": 0,
+      "power": 1,
+      "fax": 0,
+      "ext": "",
+      "note": "",
+      "lanNo": "",
+      "telNo": ""
     }
   ]
 }
