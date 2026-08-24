@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-24T09:09:43.180Z",
+  "exportedAt": "2026-08-24T09:14:06.798Z",
   "floors": [
     {
       "id": 1,
@@ -1130,27 +1130,8 @@
       "type": "desk",
       "name": " (copy)",
       "floor": 1,
-      "x": -6.31,
-      "z": 1.94,
-      "rot": 0,
-      "lan": 0,
-      "tel": 0,
-      "power": 0,
-      "fax": 0,
-      "ext": "",
-      "note": "",
-      "lanNo": "",
-      "telNo": "",
-      "labelOn": false,
-      "locked": true
-    },
-    {
-      "id": 91,
-      "type": "desk",
-      "name": " (copy)",
-      "floor": 1,
-      "x": -5.96,
-      "z": 0.9,
+      "x": 0.95,
+      "z": 3.94,
       "rot": 270,
       "lan": 0,
       "tel": 0,
@@ -1161,7 +1142,26 @@
       "lanNo": "",
       "telNo": "",
       "labelOn": false,
-      "locked": true
+      "locked": false
+    },
+    {
+      "id": 91,
+      "type": "desk",
+      "name": " (copy)",
+      "floor": 1,
+      "x": 1.3,
+      "z": 2.9,
+      "rot": 180,
+      "lan": 0,
+      "tel": 0,
+      "power": 0,
+      "fax": 0,
+      "ext": "",
+      "note": "",
+      "lanNo": "",
+      "telNo": "",
+      "labelOn": false,
+      "locked": false
     }
   ]
 }
