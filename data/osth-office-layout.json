@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-24T05:33:45.226Z",
+  "exportedAt": "2026-08-24T05:34:57.743Z",
   "floors": [
     {
       "id": 1,
@@ -21,8 +21,8 @@
       "type": "printer",
       "name": "Old Fuji Xerox",
       "floor": 1,
-      "x": -0.96,
-      "z": -2.21,
+      "x": -3.06,
+      "z": -3.85,
       "rot": 0,
       "lan": 1,
       "tel": 0,
@@ -31,7 +31,8 @@
       "ext": "",
       "note": "",
       "lanNo": "1F-18",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 22,
@@ -48,7 +49,8 @@
       "ext": "",
       "note": "ห้องครัว",
       "lanNo": "1F-22",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 23,
@@ -65,7 +67,8 @@
       "ext": "",
       "note": "ห้องช่าง",
       "lanNo": "1F-23",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 24,
@@ -82,7 +85,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 25,
@@ -99,7 +103,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 26,
@@ -116,7 +121,8 @@
       "ext": "14",
       "note": "",
       "lanNo": "2F-01",
-      "telNo": "14"
+      "telNo": "14",
+      "labelOn": true
     },
     {
       "id": 27,
@@ -133,7 +139,8 @@
       "ext": "14",
       "note": "",
       "lanNo": "2F-02",
-      "telNo": "14"
+      "telNo": "14",
+      "labelOn": true
     },
     {
       "id": 28,
@@ -150,7 +157,8 @@
       "ext": "22,23",
       "note": "",
       "lanNo": "2F-03",
-      "telNo": "22,23"
+      "telNo": "22,23",
+      "labelOn": true
     },
     {
       "id": 29,
@@ -167,7 +175,8 @@
       "ext": "",
       "note": "",
       "lanNo": "2F-04",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 30,
@@ -184,7 +193,8 @@
       "ext": "",
       "note": "",
       "lanNo": "2F-05",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 31,
@@ -201,7 +211,8 @@
       "ext": "",
       "note": "",
       "lanNo": "2F-06",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 32,
@@ -218,7 +229,8 @@
       "ext": "",
       "note": "โซนช่าง",
       "lanNo": "2F-07",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 33,
@@ -235,7 +247,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 34,
@@ -252,7 +265,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 35,
@@ -269,7 +283,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 36,
@@ -286,7 +301,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 46,
@@ -303,7 +319,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 47,
@@ -320,7 +337,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 48,
@@ -337,7 +355,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 49,
@@ -354,7 +373,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 50,
@@ -371,14 +391,15 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 51,
       "type": "cabinet",
       "name": "ตู้4",
       "floor": 1,
-      "x": -6.01,
+      "x": -6.74,
       "z": 5.1,
       "rot": 180,
       "lan": 0,
@@ -388,7 +409,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 52,
@@ -405,7 +427,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": false
     },
     {
       "id": 53,
@@ -422,7 +445,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": false
     },
     {
       "id": 54,
@@ -439,7 +463,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": false
     },
     {
       "id": 55,
@@ -456,7 +481,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 56,
@@ -473,7 +499,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 57,
@@ -490,7 +517,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 58,
@@ -507,7 +535,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 59,
@@ -524,7 +553,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 60,
@@ -541,7 +571,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 61,
@@ -558,7 +589,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 62,
@@ -575,7 +607,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 63,
@@ -592,7 +625,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 65,
@@ -609,7 +643,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 66,
@@ -626,7 +661,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 67,
@@ -643,7 +679,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 68,
@@ -660,7 +697,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     },
     {
       "id": 69,
@@ -677,7 +715,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": false
     },
     {
       "id": 70,
@@ -694,7 +733,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "labelOn": true
     }
   ]
 }
