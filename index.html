@@ -63,6 +63,7 @@
   #stage{position:absolute; inset:0}
   #stage canvas{display:block}
   #hint{position:absolute; left:12px; bottom:12px; max-width:min(640px, calc(100% - 24px)); background:rgba(14,16,20,.82); border:1px solid var(--line); border-radius:8px; padding:6px 12px; font-size:11px; color:var(--dim); pointer-events:none; backdrop-filter:blur(4px); line-height:1.5}
+  .marquee{position:absolute; border:1px solid var(--accent); background:rgba(79,125,243,.15); pointer-events:none; z-index:10}
   #stats{position:absolute; left:12px; bottom:58px; background:rgba(14,16,20,.82); border:1px solid var(--line); border-radius:8px; padding:8px 12px; font-size:12px; backdrop-filter:blur(4px)}
   #stats b{font-weight:700}
   #stats .s{display:inline-flex; align-items:center; gap:5px; margin-right:12px}
@@ -152,7 +153,7 @@
     <main>
       <div id="stage"></div>
       <div id="stats"></div>
-      <div id="hint">คลิกอุปกรณ์ด้านซ้ายแล้วคลิกวางบนพื้น · Shift ค้าง = วางต่อเนื่อง · ลากย้าย · R หมุน · Ctrl+D ทำสำเนา · Delete ลบ</div>
+      <div id="hint">คลิกอุปกรณ์ด้านซ้ายแล้วคลิกวางบนพื้น · Shift ค้าง = วางต่อเนื่อง · ลากย้าย · Shift+ลากบนพื้น = เลือกทั้งชุด · R หมุน · Ctrl+D ทำสำเนา · Delete ลบ</div>
       <div id="toast"></div>
     </main>
     <aside class="props" id="props"></aside>
@@ -263,12 +264,12 @@ const SVC_COLOR = {lan:0x3b82f6, tel:0x22c55e, power:0xf59e0b, fax:0xef4444};
 const SVC_LABEL = {lan:'LAN', tel:'TEL', power:'POWER', fax:'FAX'};
 
 const TYPE_LABEL = {
-  workstation:'โต๊ะทำงาน + คอม', desk:'โต๊ะเปล่า', meeting:'โต๊ะประชุม', chair:'เก้าอี้',
+  workstation:'โต๊ะทำงาน + คอม', workstationL:'โต๊ะตัว L + คอม', desk:'โต๊ะเปล่า', deskL:'โต๊ะตัว L (เปล่า)', meeting:'โต๊ะประชุม', chair:'เก้าอี้',
   cabinet:'ตู้เอกสาร', monitor:'จอมอนิเตอร์', pc:'เครื่องคอม', printer:'ปริ้นเตอร์/Copier',
   rack:'ตู้ Rack (MDF)', panel:'ตู้ไฟ', wifi:'WiFi AP', outlet:'จุดปลั๊ก/เต้ารับ', wall:'ผนังกั้น'
 };
 const TYPE_DEFAULT_SVC = {
-  workstation:{lan:1,tel:1,power:1,fax:0}, printer:{lan:1,tel:0,power:1,fax:0},
+  workstation:{lan:1,tel:1,power:1,fax:0}, workstationL:{lan:1,tel:1,power:1,fax:0}, printer:{lan:1,tel:0,power:1,fax:0},
   wifi:{lan:1,tel:0,power:0,fax:0}, outlet:{lan:1,tel:0,power:1,fax:0},
   meeting:{lan:1,tel:0,power:1,fax:0}
 };
@@ -356,7 +357,7 @@ function save(){
   scheduleGhPush();
 }
 
-const ui = { floor:1, mode:'floor', show:{lan:true,tel:true,power:true,fax:true,labels:true}, selected:null, placing:null };
+const ui = { floor:1, mode:'floor', show:{lan:true,tel:true,power:true,fax:true,labels:true}, selected:null, selectedMulti:new Set(), placing:null };
 
 /* ---------- three setup ---------- */
 const stageEl = document.getElementById('stage');
@@ -426,6 +427,11 @@ const BUILDERS = {
     g.add(box(1.4,.05,.7,M.wood,0,.73,0));
     [[-.65,-.3],[.65,-.3],[-.65,.3],[.65,.3]].forEach(([x,z])=>g.add(box(.05,.71,.05,M.metal,x,.355,z)));
   },
+  deskL(g){
+    g.add(box(1.4,.05,.7,M.wood,0,.73,0));              // long side
+    g.add(box(.7,.05,.9,M.wood,.35,.73,.8));             // return, forms the L
+    [[-.65,-.3],[.65,-.3],[-.65,.3],[.05,1.15],[.65,1.15]].forEach(([x,z])=>g.add(box(.05,.71,.05,M.metal,x,.355,z)));
+  },
   workstation(g){
     BUILDERS.desk(g);
     const mon = new THREE.Group();
@@ -441,7 +447,24 @@ const BUILDERS = {
     ch.add(box(.45,.5,.06,M.chair,0,.78,.22));
     ch.add(cyl(.03,.03,.4,M.metal,0,.25,0));
     ch.add(cyl(.24,.26,.03,M.dark,0,.05,0));
-    ch.position.z = .62; ch.rotation.y = Math.PI; g.add(ch);
+    ch.position.z = .62; g.add(ch);   // faces -z, toward the desk
+  },
+  workstationL(g){
+    BUILDERS.deskL(g);
+    const mon = new THREE.Group();
+    mon.add(box(.55,.33,.03,M.dark,0,1.08,0));
+    const scr = box(.5,.28,.005,M.screen,0,1.08,.02); scr.castShadow=false; mon.add(scr);
+    mon.add(cyl(.03,.03,.25,M.metal,0,.87,0));
+    mon.add(cyl(.11,.13,.02,M.metal,0,.765,0));
+    mon.position.z = -.15; g.add(mon);
+    g.add(box(.18,.42,.45,M.dark,-.55,.21,0));            // tower
+    g.add(box(.42,.02,.15,M.dark,.05,.765,.18));          // keyboard
+    const ch = new THREE.Group();
+    ch.add(box(.45,.06,.45,M.chair,0,.46,0));
+    ch.add(box(.45,.5,.06,M.chair,0,.78,.22));
+    ch.add(cyl(.03,.03,.4,M.metal,0,.25,0));
+    ch.add(cyl(.24,.26,.03,M.dark,0,.05,0));
+    ch.position.set(.5,0,.7); ch.rotation.y = Math.PI*.25; g.add(ch);   // faces diagonally into the corner, toward the desk
   },
   meeting(g){
     g.add(box(2.4,.05,1.2,M.woodDark,0,.735,0));
@@ -549,7 +572,7 @@ function makeLabel(item){
   sp.userData.isLabel = true;
   return sp;
 }
-const LABEL_H = {workstation:1.9, desk:1.3, meeting:1.4, chair:1.3, cabinet:2.2, monitor:1.7, pc:1, printer:1.7, rack:2.4, panel:2.1, wifi:2.85, outlet:.8, wall:2.9};
+const LABEL_H = {workstation:1.9, workstationL:1.9, desk:1.3, deskL:1.3, meeting:1.4, chair:1.3, cabinet:2.2, monitor:1.7, pc:1, printer:1.7, rack:2.4, panel:2.1, wifi:2.85, outlet:.8, wall:2.9};
 
 /* ---------- scene graph ---------- */
 const buildingGroup = new THREE.Group(); scene.add(buildingGroup);
@@ -641,8 +664,9 @@ function rebuildCables(){
 }
 
 let selRing = null;
+const multiRings = new Map();
 function rebuildScene(){
-  buildingGroup.clear(); itemGroups.clear();
+  buildingGroup.clear(); itemGroups.clear(); multiRings.clear();
   visibleFloors().forEach(f=>{
     const shell = buildFloorShell(f);
     shell.position.y = floorY(f);
@@ -661,6 +685,24 @@ function rebuildScene(){
   renderStats();
 }
 function updateSelRing(){
+  if(ui.selectedMulti.size>1){
+    if(selRing) selRing.visible = false;
+    for(const [id,ring] of multiRings){ if(!ui.selectedMulti.has(id)){ buildingGroup.remove(ring); multiRings.delete(id); } }
+    ui.selectedMulti.forEach(id=>{
+      const it = state.items.find(i=>i.id===id);
+      if(!it || !itemGroups.has(id)) return;
+      let ring = multiRings.get(id);
+      if(!ring){
+        ring = new THREE.Mesh(new THREE.RingGeometry(.55,.68,32), M.sel);
+        ring.rotation.x = -Math.PI/2; ring.renderOrder = 5;
+        buildingGroup.add(ring); multiRings.set(id, ring);
+      }
+      ring.position.set(it.x, floorY(it.floor)+.02, it.z);
+      ring.visible = true;
+    });
+    return;
+  }
+  multiRings.forEach(ring=>buildingGroup.remove(ring)); multiRings.clear();
   const it = getSel();
   if(it && itemGroups.has(it.id)){
     selRing.visible = true;
@@ -668,12 +710,19 @@ function updateSelRing(){
   } else if(selRing) selRing.visible = false;
 }
 function getSel(){ return state.items.find(i=>i.id===ui.selected) || null; }
+function worldToScreen(x, floor, z){
+  const p = new THREE.Vector3(x, floorY(floor)+.5, z).project(camera);
+  const r = stageEl.getBoundingClientRect();
+  return { x: r.left + (p.x*0.5+0.5)*r.width, y: r.top + (1-(p.y*0.5+0.5))*r.height };
+}
 
 /* ---------- picking / placing / dragging ---------- */
 const ray = new THREE.Raycaster();
 const ptr = new THREE.Vector2();
 const dragPlane = new THREE.Plane(new THREE.Vector3(0,1,0), 0);
 let dragging = null, ghost = null, downPos = null, moved = false;
+let draggingGroup = null, groupOrigin = null;
+let marquee = null, marqueeEl = null;
 
 function ptrUpdate(e){
   const r = renderer.domElement.getBoundingClientRect();
@@ -700,16 +749,69 @@ function pickItem(){
   return null;
 }
 
+function startGroupDrag(e){
+  draggingGroup = [...ui.selectedMulti].map(id=>{
+    const item = state.items.find(i=>i.id===id);
+    return { item, x0:item.x, z0:item.z };
+  });
+  groupOrigin = planePoint();
+  controls.enabled = false;
+  renderer.domElement.setPointerCapture(e.pointerId);
+}
+function startMarquee(e){
+  marquee = { x0:e.clientX, y0:e.clientY };
+  marqueeEl = document.createElement('div');
+  marqueeEl.className = 'marquee';
+  stageEl.appendChild(marqueeEl);
+  updateMarqueeRect(e.clientX, e.clientY);
+  controls.enabled = false;
+  renderer.domElement.setPointerCapture(e.pointerId);
+}
+function updateMarqueeRect(cx, cy){
+  const r = stageEl.getBoundingClientRect();
+  const x0 = Math.min(marquee.x0, cx) - r.left, x1 = Math.max(marquee.x0, cx) - r.left;
+  const y0 = Math.min(marquee.y0, cy) - r.top, y1 = Math.max(marquee.y0, cy) - r.top;
+  marqueeEl.style.left = x0+'px'; marqueeEl.style.top = y0+'px';
+  marqueeEl.style.width = (x1-x0)+'px'; marqueeEl.style.height = (y1-y0)+'px';
+}
+function finishMarquee(e){
+  const rx0 = Math.min(marquee.x0, e.clientX), rx1 = Math.max(marquee.x0, e.clientX);
+  const ry0 = Math.min(marquee.y0, e.clientY), ry1 = Math.max(marquee.y0, e.clientY);
+  const hitIds = [];
+  state.items.filter(i=>visibleFloors().includes(i.floor)).forEach(i=>{
+    const s = worldToScreen(i.x, i.floor, i.z);
+    if(s.x>=rx0 && s.x<=rx1 && s.y>=ry0 && s.y<=ry1) hitIds.push(i.id);
+  });
+  ui.selectedMulti = new Set(hitIds);
+  ui.selected = hitIds.length===1 ? hitIds[0] : null;
+  if(hitIds.length<=1) ui.selectedMulti.clear();
+  marqueeEl.remove(); marqueeEl = null; marquee = null;
+  controls.enabled = true;
+  renderPanel(); updateSelRing();
+}
 renderer.domElement.addEventListener('pointerdown', e=>{
   if(e.button!==0) return;
   ptrUpdate(e); downPos = {x:e.clientX,y:e.clientY}; moved = false;
   if(ui.placing) return;
   const id = pickItem();
   if(id!==null && ui.mode!=='all'){
-    ui.selected = id; renderPanel(); updateSelRing();
-    dragging = state.items.find(i=>i.id===id);
-    controls.enabled = false;
-    renderer.domElement.setPointerCapture(e.pointerId);
+    if(ui.selectedMulti.size>1 && ui.selectedMulti.has(id)){
+      startGroupDrag(e);
+    } else if(e.shiftKey){
+      if(ui.selectedMulti.size<=1 && ui.selected!==null) ui.selectedMulti.add(ui.selected);
+      if(ui.selectedMulti.has(id)) ui.selectedMulti.delete(id); else ui.selectedMulti.add(id);
+      ui.selected = ui.selectedMulti.size===1 ? [...ui.selectedMulti][0] : null;
+      if(ui.selectedMulti.size<=1) ui.selectedMulti.clear();
+      renderPanel(); updateSelRing();
+    } else {
+      ui.selectedMulti.clear();
+      ui.selected = id; renderPanel(); updateSelRing();
+      dragging = state.items.find(i=>i.id===id);
+      controls.enabled = false;
+      renderer.domElement.setPointerCapture(e.pointerId);
+    }
+  } else if(id===null && ui.mode!=='all' && e.shiftKey){
+    startMarquee(e);
   }
 });
 renderer.domElement.addEventListener('pointermove', e=>{
@@ -717,6 +819,22 @@ renderer.domElement.addEventListener('pointermove', e=>{
   if(downPos && (Math.abs(e.clientX-downPos.x)>4 || Math.abs(e.clientY-downPos.y)>4)) moved = true;
   if(ui.placing && ghost){
     const p = planePoint(); if(p){ clampPt(p); ghost.position.set(p.x,0,p.z); }
+    return;
+  }
+  if(marquee){ updateMarqueeRect(e.clientX, e.clientY); return; }
+  if(draggingGroup){
+    const p = planePoint();
+    if(p && groupOrigin){
+      const dx = p.x - groupOrigin.x, dz = p.z - groupOrigin.z;
+      draggingGroup.forEach(entry=>{
+        const np = clampPt(new THREE.Vector3(entry.x0+dx, 0, entry.z0+dz));
+        entry.item.x = +np.x.toFixed(2); entry.item.z = +np.z.toFixed(2);
+        const g = itemGroups.get(entry.item.id);
+        if(g) g.position.set(entry.item.x,0,entry.item.z);
+      });
+      updateSelRing();
+      requestCableRefresh();
+    }
     return;
   }
   if(dragging){
@@ -746,11 +864,13 @@ renderer.domElement.addEventListener('pointerup', e=>{
     downPos = null;
     return;
   }
+  if(marquee){ finishMarquee(e); downPos = null; return; }
+  if(draggingGroup){ save(); draggingGroup = null; groupOrigin = null; controls.enabled = true; downPos = null; return; }
   if(dragging){ save(); }
   else if(!moved){
     // click empty space -> deselect
     const id = pickItem();
-    if(id===null){ ui.selected = null; renderPanel(); updateSelRing(); }
+    if(id===null){ ui.selected = null; ui.selectedMulti.clear(); renderPanel(); updateSelRing(); }
     else if(ui.mode==='all'){ ui.selected = id; renderPanel(); updateSelRing(); }
   }
   dragging = null; controls.enabled = true; downPos = null;
@@ -796,6 +916,34 @@ function rotateSel(){
   if(g) g.rotation.y = -it.rot*Math.PI/180;
   save(); renderPanel(true);
 }
+function deleteMulti(){
+  if(ui.selectedMulti.size<=1) return;
+  state.items = state.items.filter(i=>!ui.selectedMulti.has(i.id));
+  ui.selectedMulti.clear(); ui.selected = null;
+  save(); rebuildScene(); renderPanel();
+}
+function duplicateMulti(){
+  if(ui.selectedMulti.size<=1) return;
+  const copies = [];
+  [...ui.selectedMulti].forEach(id=>{
+    const it = state.items.find(i=>i.id===id); if(!it) return;
+    const cp = {...it, id: state.nextId++, x: it.x+.9, z: it.z+.4, name: it.name+' (copy)'};
+    clampPt(cp);
+    state.items.push(cp); copies.push(cp.id);
+  });
+  ui.selectedMulti = new Set(copies); ui.selected = null;
+  save(); rebuildScene(); renderPanel();
+}
+function rotateMulti(){
+  if(ui.selectedMulti.size<=1) return;
+  ui.selectedMulti.forEach(id=>{
+    const it = state.items.find(i=>i.id===id); if(!it) return;
+    it.rot = (it.rot+45)%360;
+    const g = itemGroups.get(it.id);
+    if(g) g.rotation.y = -it.rot*Math.PI/180;
+  });
+  save(); renderPanel();
+}
 
 /* ---------- placing ghost ---------- */
 function startPlacing(type){
@@ -820,21 +968,23 @@ function stopPlacing(){
 /* ---------- keyboard ---------- */
 addEventListener('keydown', e=>{
   if(e.target.tagName==='INPUT' || e.target.tagName==='SELECT') return;
-  if(e.key==='Escape'){ stopPlacing(); ui.selected=null; renderPanel(); updateSelRing(); }
-  if(e.key==='Delete' || e.key==='Backspace'){ deleteSel(); }
-  if(e.key==='r' || e.key==='R'){ rotateSel(); }
-  if((e.ctrlKey||e.metaKey) && (e.key==='d'||e.key==='D')){ e.preventDefault(); duplicateSel(); }
+  if(e.key==='Escape'){ stopPlacing(); ui.selected=null; ui.selectedMulti.clear(); renderPanel(); updateSelRing(); }
+  if(e.key==='Delete' || e.key==='Backspace'){ if(ui.selectedMulti.size>1) deleteMulti(); else deleteSel(); }
+  if(e.key==='r' || e.key==='R'){ if(ui.selectedMulti.size>1) rotateMulti(); else rotateSel(); }
+  if((e.ctrlKey||e.metaKey) && (e.key==='d'||e.key==='D')){ e.preventDefault(); if(ui.selectedMulti.size>1) duplicateMulti(); else duplicateSel(); }
 });
 
 /* ---------- UI: palette ---------- */
 const PAL_GROUPS = [
-  ['เฟอร์นิเจอร์', ['workstation','desk','meeting','chair','cabinet','wall']],
+  ['เฟอร์นิเจอร์', ['workstation','workstationL','desk','deskL','meeting','chair','cabinet','wall']],
   ['อุปกรณ์ IT', ['monitor','pc','printer','wifi']],
   ['ระบบสาย', ['outlet','rack','panel']],
 ];
 const GLYPHS = {
   workstation:'<div style="position:absolute;left:2px;top:8px;width:22px;height:4px;background:#9c7c55;border-radius:1px"></div><div style="position:absolute;left:6px;top:1px;width:12px;height:7px;background:#3f4c66;border-radius:1px"></div>',
   desk:'<div style="position:absolute;left:2px;top:8px;width:22px;height:4px;background:#9c7c55;border-radius:1px"></div><div style="position:absolute;left:4px;top:12px;width:2px;height:7px;background:#5c667a"></div><div style="position:absolute;right:4px;top:12px;width:2px;height:7px;background:#5c667a"></div>',
+  workstationL:'<div style="position:absolute;left:2px;top:11px;width:14px;height:4px;background:#9c7c55;border-radius:1px"></div><div style="position:absolute;left:12px;top:2px;width:4px;height:13px;background:#9c7c55;border-radius:1px"></div><div style="position:absolute;left:4px;top:3px;width:9px;height:6px;background:#3f4c66;border-radius:1px"></div>',
+  deskL:'<div style="position:absolute;left:2px;top:11px;width:14px;height:4px;background:#9c7c55;border-radius:1px"></div><div style="position:absolute;left:12px;top:2px;width:4px;height:13px;background:#9c7c55;border-radius:1px"></div>',
   meeting:'<div style="position:absolute;left:1px;top:6px;width:24px;height:9px;background:#7a6244;border-radius:4px"></div>',
   chair:'<div style="position:absolute;left:8px;top:8px;width:10px;height:8px;background:#3a4252;border-radius:2px"></div><div style="position:absolute;left:8px;top:2px;width:10px;height:5px;background:#4a5468;border-radius:2px"></div>',
   cabinet:'<div style="position:absolute;left:8px;top:1px;width:10px;height:18px;background:#77818f;border-radius:1px"></div>',
@@ -869,6 +1019,7 @@ function renderTabs(){
 tabsEl.addEventListener('click', e=>{
   const b = e.target.closest('button'); if(!b) return;
   stopPlacing();
+  ui.selectedMulti.clear();
   if(b.dataset.f==='all'){ ui.mode='all'; }
   else { ui.mode='floor'; ui.floor=+b.dataset.f; }
   setCam(ui.mode);
@@ -889,6 +1040,7 @@ document.getElementById('toggles').addEventListener('click', e=>{
 /* ---------- UI: properties panel ---------- */
 const propsEl = document.getElementById('props');
 function renderPanel(soft){
+  if(ui.selectedMulti.size>1){ renderBulkPanel(); return; }
   const it = getSel();
   if(!it){ propsEl.classList.remove('open'); propsEl.innerHTML=''; return; }
   if(soft && propsEl.classList.contains('open')){
@@ -922,6 +1074,18 @@ function renderPanel(soft){
       '<button data-act="rot">หมุน 45°</button>'+
       '<button data-act="dup">สำเนา</button>'+
       '<button data-act="del" class="del">ลบ</button>'+
+    '</div>';
+}
+function renderBulkPanel(){
+  const n = ui.selectedMulti.size;
+  propsEl.classList.add('open');
+  propsEl.innerHTML =
+    '<div class="pr-type">เลือกอยู่ '+n+' ชิ้น</div>'+
+    '<div class="pr-row" style="color:var(--dim); font-size:12px; line-height:1.6">ลากชิ้นใดชิ้นหนึ่งในกลุ่มเพื่อย้ายทั้งหมดพร้อมกัน · Shift+ลากบนพื้นเพื่อเลือกใหม่</div>'+
+    '<div class="pr-btns">'+
+      '<button data-act="rotAll">หมุนทั้งหมด 45°</button>'+
+      '<button data-act="dupAll">ทำสำเนาทั้งหมด</button>'+
+      '<button data-act="delAll" class="del">ลบทั้งหมด</button>'+
     '</div>';
 }
 function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
@@ -962,6 +1126,9 @@ propsEl.addEventListener('click', e=>{
   if(act==='del') deleteSel();
   if(act==='dup') duplicateSel();
   if(act==='rot') rotateSel();
+  if(act==='delAll') deleteMulti();
+  if(act==='dupAll') duplicateMulti();
+  if(act==='rotAll') rotateMulti();
 });
 
 /* ---------- stats ---------- */
@@ -1008,7 +1175,7 @@ document.getElementById('reset').onclick = ()=>{
   if(!confirm('ล้างผังปัจจุบันและกลับไปใช้ข้อมูลจากไฟล์ Excel?')) return;
   const items = seedItems();
   state = { items, nextId: Math.max(...items.map(i=>i.id))+1 };
-  ui.selected = null;
+  ui.selected = null; ui.selectedMulti.clear();
   save(); rebuildScene(); renderPanel();
   toast('รีเซ็ตเรียบร้อย');
 };
