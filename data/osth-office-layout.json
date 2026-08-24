@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-24T09:40:21.401Z",
+  "exportedAt": "2026-08-24T09:41:25.132Z",
   "floors": [
     {
       "id": 1,
@@ -1793,12 +1793,31 @@
     {
       "id": 125,
       "type": "monitor",
-      "name": "จอมอนิเตอร์ 19",
+      "name": "",
       "floor": 1,
-      "x": 4.83,
-      "z": 0.18,
+      "x": 4.8,
+      "z": 0.17,
       "rot": 180,
-      "labelOn": true,
+      "labelOn": false,
+      "locked": true,
+      "lan": 0,
+      "tel": 0,
+      "power": 0,
+      "fax": 0,
+      "ext": "",
+      "note": "",
+      "lanNo": "",
+      "telNo": ""
+    },
+    {
+      "id": 126,
+      "type": "monitor",
+      "name": " (copy)",
+      "floor": 1,
+      "x": 6.13,
+      "z": 0.16,
+      "rot": 180,
+      "labelOn": false,
       "locked": false,
       "lan": 0,
       "tel": 0,
