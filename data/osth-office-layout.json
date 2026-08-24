@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-24T05:28:10.113Z",
+  "exportedAt": "2026-08-24T05:30:10.757Z",
   "floors": [
     {
       "id": 1,
@@ -563,7 +563,7 @@
     {
       "id": 62,
       "type": "pc",
-      "name": "เครื่องคอม 1",
+      "name": "",
       "floor": 1,
       "x": -6.82,
       "z": 1.67,
@@ -571,6 +571,40 @@
       "lan": 0,
       "tel": 0,
       "power": 0,
+      "fax": 0,
+      "ext": "",
+      "note": "",
+      "lanNo": "",
+      "telNo": ""
+    },
+    {
+      "id": 63,
+      "type": "pc",
+      "name": "",
+      "floor": 1,
+      "x": -6.83,
+      "z": 2.89,
+      "rot": 90,
+      "lan": 0,
+      "tel": 0,
+      "power": 0,
+      "fax": 0,
+      "ext": "",
+      "note": "",
+      "lanNo": "",
+      "telNo": ""
+    },
+    {
+      "id": 64,
+      "type": "workstation",
+      "name": "โต๊ะทำงาน + คอม 5",
+      "floor": 1,
+      "x": -3.98,
+      "z": -0.22,
+      "rot": 90,
+      "lan": 1,
+      "tel": 1,
+      "power": 1,
       "fax": 0,
       "ext": "",
       "note": "",
