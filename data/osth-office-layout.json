@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-24T05:34:57.743Z",
+  "exportedAt": "2026-08-24T05:36:16.791Z",
   "floors": [
     {
       "id": 1,
@@ -309,7 +309,7 @@
       "type": "desk",
       "name": "",
       "floor": 1,
-      "x": -7.21,
+      "x": -7.22,
       "z": 1.55,
       "rot": 0,
       "lan": 0,
@@ -320,7 +320,7 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": true
+      "labelOn": false
     },
     {
       "id": 47,
@@ -338,7 +338,7 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": true
+      "labelOn": false
     },
     {
       "id": 48,
@@ -392,14 +392,14 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": true
+      "labelOn": false
     },
     {
       "id": 51,
       "type": "cabinet",
       "name": "ตู้4",
       "floor": 1,
-      "x": -6.74,
+      "x": -6.01,
       "z": 5.1,
       "rot": 180,
       "lan": 0,
@@ -410,7 +410,7 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": true
+      "labelOn": false
     },
     {
       "id": 52,
@@ -482,7 +482,7 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": true
+      "labelOn": false
     },
     {
       "id": 56,
@@ -572,7 +572,7 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": true
+      "labelOn": false
     },
     {
       "id": 61,
