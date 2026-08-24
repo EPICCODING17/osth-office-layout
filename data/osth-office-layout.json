@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-24T06:17:42.355Z",
+  "exportedAt": "2026-08-24T06:18:50.801Z",
   "floors": [
     {
       "id": 1,
@@ -324,7 +324,8 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": false
+      "labelOn": false,
+      "locked": true
     },
     {
       "id": 47,
@@ -342,7 +343,8 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": false
+      "labelOn": false,
+      "locked": true
     },
     {
       "id": 48,
@@ -550,7 +552,8 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": true
+      "labelOn": true,
+      "locked": true
     },
     {
       "id": 59,
@@ -568,7 +571,8 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": true
+      "labelOn": true,
+      "locked": true
     },
     {
       "id": 60,
@@ -586,7 +590,8 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": false
+      "labelOn": false,
+      "locked": true
     },
     {
       "id": 61,
@@ -612,8 +617,8 @@
       "type": "pc",
       "name": "",
       "floor": 1,
-      "x": -6.82,
-      "z": 1.67,
+      "x": -6.85,
+      "z": 1.62,
       "rot": 90,
       "lan": 0,
       "tel": 0,
@@ -623,7 +628,8 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": false
+      "labelOn": false,
+      "locked": true
     },
     {
       "id": 63,
@@ -641,7 +647,8 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": false
+      "labelOn": false,
+      "locked": true
     },
     {
       "id": 65,
@@ -813,6 +820,25 @@
       "lanNo": "",
       "telNo": "",
       "locked": true
+    },
+    {
+      "id": 74,
+      "type": "outlet",
+      "name": "จุดปลั๊ก/เต้ารับ 11",
+      "floor": 1,
+      "x": -4.53,
+      "z": 2.2,
+      "rot": 0,
+      "labelOn": true,
+      "locked": true,
+      "lan": 1,
+      "tel": 0,
+      "power": 1,
+      "fax": 0,
+      "ext": "",
+      "note": "",
+      "lanNo": "",
+      "telNo": ""
     }
   ]
 }
