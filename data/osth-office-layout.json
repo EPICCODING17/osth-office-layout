@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-24T09:28:38.016Z",
+  "exportedAt": "2026-08-24T09:33:03.341Z",
   "floors": [
     {
       "id": 1,
@@ -1643,8 +1643,8 @@
       "type": "monitor",
       "name": "จอมอนิเตอร์ 15",
       "floor": 1,
-      "x": 4.78,
-      "z": 2.76,
+      "x": 4.76,
+      "z": 2.82,
       "rot": 0,
       "labelOn": true,
       "locked": false,
