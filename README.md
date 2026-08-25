@@ -111,6 +111,15 @@ previous seed were corrected:
 Floor 3 has no entries in the source spreadsheet — its rack/panel are
 infrastructure items added directly in the app, not sourced from Excel.
 
+## Device list
+
+Click **รายการ** in the header to slide in a list of every item across all
+3 floors, grouped by floor and sorted by LAN cable number. Each row shows
+its LAN/TEL chips when present. Click a row to select that item precisely —
+useful when items overlap in the 3D view and clicking there is unreliable —
+and if it's on a different floor than the one currently shown, the floor
+tab switches automatically first.
+
 ## TODO / ideas
 
 - (nothing queued yet — add features/bugs here as they come up)
@@ -126,4 +135,7 @@ infrastructure items added directly in the app, not sourced from Excel.
   per-item position lock; new "ประตู" (door) item; chain-extend arrows —
   select a wall/door/cabinet and click the arrow at either end to place a
   flush, zero-gap copy continuing in that direction (works for any type
-  listed in `CHAIN_LEN`).
+  listed in `CHAIN_LEN`); device list drawer — click **รายการ** for a
+  floor-grouped list of every item with LAN/TEL chips, click a row to
+  select it precisely (auto-switches floor if needed) instead of relying
+  on an imprecise click in the 3D view.
