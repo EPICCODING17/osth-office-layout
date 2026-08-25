@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-25T03:53:24.739Z",
+  "exportedAt": "2026-08-25T03:54:44.089Z",
   "floors": [
     {
       "id": 1,
@@ -2068,12 +2068,31 @@
     {
       "id": 152,
       "type": "outlet",
-      "name": "จุดปลั๊ก/เต้ารับ 20",
+      "name": "",
       "floor": 1,
       "x": -3.17,
       "z": -3.37,
       "rot": 0,
-      "labelOn": true,
+      "labelOn": false,
+      "locked": true,
+      "lan": 1,
+      "tel": 0,
+      "power": 2,
+      "fax": 0,
+      "ext": "",
+      "note": "",
+      "lanNo": "",
+      "telNo": ""
+    },
+    {
+      "id": 153,
+      "type": "outlet",
+      "name": "จุดปลั๊ก/เต้ารับ 21",
+      "floor": 1,
+      "x": 4.69,
+      "z": -3.37,
+      "rot": 0,
+      "labelOn": false,
       "locked": false,
       "lan": 1,
       "tel": 0,
