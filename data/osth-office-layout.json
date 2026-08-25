@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-25T04:11:06.573Z",
+  "exportedAt": "2026-08-25T04:12:21.687Z",
   "floors": [
     {
       "id": 1,
@@ -382,7 +382,7 @@
       "x": -6.8,
       "z": 1.95,
       "rot": 0,
-      "lan": 1,
+      "lan": 0,
       "tel": 0,
       "power": 1,
       "fax": 0,
@@ -669,8 +669,8 @@
       "rot": 0,
       "labelOn": false,
       "locked": true,
-      "lan": 1,
-      "tel": 1,
+      "lan": 0,
+      "tel": 0,
       "power": 1,
       "fax": 0,
       "ext": "",
@@ -719,21 +719,21 @@
     {
       "id": 77,
       "type": "monitor",
-      "name": "",
+      "name": "Pooh",
       "floor": 1,
       "x": -5,
       "z": 2.22,
       "rot": 0,
-      "labelOn": false,
+      "labelOn": true,
       "locked": true,
-      "lan": 0,
-      "tel": 0,
+      "lan": 1,
+      "tel": 1,
       "power": 0,
       "fax": 0,
       "ext": "",
       "note": "",
-      "lanNo": "",
-      "telNo": ""
+      "lanNo": "11",
+      "telNo": "12"
     },
     {
       "id": 78,
