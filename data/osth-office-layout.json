@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-25T04:03:48.273Z",
+  "exportedAt": "2026-08-25T04:05:54.289Z",
   "floors": [
     {
       "id": 1,
@@ -390,7 +390,7 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": true,
+      "labelOn": false,
       "locked": true
     },
     {
@@ -409,7 +409,7 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": true,
+      "labelOn": false,
       "locked": true
     },
     {
@@ -878,14 +878,14 @@
       "rot": 90,
       "labelOn": true,
       "locked": true,
-      "lan": 0,
-      "tel": 0,
+      "lan": 1,
+      "tel": 1,
       "power": 0,
       "fax": 0,
       "ext": "",
       "note": "",
       "lanNo": "T08",
-      "telNo": ""
+      "telNo": "17"
     },
     {
       "id": 86,
