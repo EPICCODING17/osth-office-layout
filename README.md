@@ -61,6 +61,21 @@ GitHub data but never pushes.
   all 45° (each in place, not around a shared pivot), duplicate all, delete
   all. The same keyboard shortcuts (R, Ctrl+D, Delete) act on the group too.
 
+## Undo/redo, lock, and chaining walls/doors/cabinets
+
+- **Ctrl+Z** / **Ctrl+Shift+Z** (or the ↶/↷ buttons in the header) — undo/redo,
+  50 steps deep. Covers drag, add/delete/duplicate/rotate, reset, and field
+  edits in the side panel (one undo step per edit session, not per keystroke).
+- **ล็อกตำแหน่ง** toggle in the properties panel — locks that item's X/Z so it
+  can't be dragged (solo, or as part of a group-drag — it's just skipped while
+  the rest of the group still moves). Other fields (name, rotation, cabling,
+  notes) stay editable. Shows a 🔒 on its floating label.
+- **Chain-extend arrows** — select a single wall, door, or cabinet and two
+  small arrows appear at its ends. Click one to place another of the same
+  type flush against that edge (zero gap, same rotation) and it's selected
+  immediately, so clicking the new arrow keeps extending the run. No manual
+  positioning needed to line up a wall or a row of cabinets.
+
 ## Structure
 
 - `index.html` — the app (UI + Three.js scene + all logic, single file)
@@ -107,3 +122,8 @@ infrastructure items added directly in the app, not sourced from Excel.
   delete); two new furniture types (L-shape workstation, L-shape empty desk);
   fixed the workstation chair facing away from the desk (affected the
   original `workstation()` builder too, not just the new L-shape one).
+- **2026-08-25** — undo/redo (Ctrl+Z / Ctrl+Shift+Z, 50-step history) and
+  per-item position lock; new "ประตู" (door) item; chain-extend arrows —
+  select a wall/door/cabinet and click the arrow at either end to place a
+  flush, zero-gap copy continuing in that direction (works for any type
+  listed in `CHAIN_LEN`).
