@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-25T04:09:00.223Z",
+  "exportedAt": "2026-08-25T04:10:05.104Z",
   "floors": [
     {
       "id": 1,
@@ -707,8 +707,8 @@
       "rot": 0,
       "labelOn": false,
       "locked": true,
-      "lan": 1,
-      "tel": 1,
+      "lan": 0,
+      "tel": 0,
       "power": 1,
       "fax": 0,
       "ext": "",
@@ -947,21 +947,21 @@
     {
       "id": 89,
       "type": "monitor",
-      "name": "",
+      "name": "Golf",
       "floor": 1,
       "x": -2.73,
       "z": 2.38,
       "rot": 45,
       "labelOn": true,
       "locked": true,
-      "lan": 0,
-      "tel": 0,
+      "lan": 1,
+      "tel": 1,
       "power": 0,
       "fax": 0,
       "ext": "",
       "note": "",
-      "lanNo": "",
-      "telNo": ""
+      "lanNo": "T10",
+      "telNo": "15"
     },
     {
       "id": 90,
