@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-25T04:10:05.104Z",
+  "exportedAt": "2026-08-25T04:11:06.573Z",
   "floors": [
     {
       "id": 1,
@@ -688,8 +688,8 @@
       "rot": 0,
       "labelOn": false,
       "locked": true,
-      "lan": 1,
-      "tel": 1,
+      "lan": 0,
+      "tel": 0,
       "power": 1,
       "fax": 0,
       "ext": "",
@@ -890,21 +890,21 @@
     {
       "id": 86,
       "type": "monitor",
-      "name": "",
+      "name": "Kook",
       "floor": 1,
       "x": -2.97,
       "z": 1.76,
       "rot": 180,
       "labelOn": false,
       "locked": true,
-      "lan": 0,
-      "tel": 0,
+      "lan": 1,
+      "tel": 1,
       "power": 0,
       "fax": 0,
       "ext": "",
       "note": "",
-      "lanNo": "",
-      "telNo": ""
+      "lanNo": "09",
+      "telNo": "0"
     },
     {
       "id": 87,
@@ -960,7 +960,7 @@
       "fax": 0,
       "ext": "",
       "note": "",
-      "lanNo": "T10",
+      "lanNo": "10",
       "telNo": "15"
     },
     {
