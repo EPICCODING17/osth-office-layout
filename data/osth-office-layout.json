@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-25T04:06:56.567Z",
+  "exportedAt": "2026-08-25T04:07:58.029Z",
   "floors": [
     {
       "id": 1,
@@ -491,19 +491,19 @@
     {
       "id": 65,
       "type": "desk",
-      "name": "",
+      "name": "Pong",
       "floor": 1,
       "x": -3.95,
       "z": -0.14,
       "rot": 270,
-      "lan": 0,
-      "tel": 0,
+      "lan": 1,
+      "tel": 1,
       "power": 0,
       "fax": 0,
       "ext": "",
       "note": "",
-      "lanNo": "",
-      "telNo": "",
+      "lanNo": "T07",
+      "telNo": "13",
       "labelOn": false,
       "locked": true
     },
@@ -649,8 +649,8 @@
       "z": 0.72,
       "rot": 0,
       "labelOn": false,
-      "lan": 1,
-      "tel": 1,
+      "lan": 0,
+      "tel": 0,
       "power": 1,
       "fax": 0,
       "ext": "",
