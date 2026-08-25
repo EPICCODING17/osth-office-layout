@@ -71,6 +71,26 @@
   #stats .s{display:inline-flex; align-items:center; gap:5px; margin-right:12px}
   #stats .s i{width:8px; height:8px; border-radius:2px; display:inline-block}
   #toast{position:absolute; top:14px; left:50%; transform:translateX(-50%); background:#232a37; border:1px solid #38415a; color:var(--text); border-radius:8px; padding:7px 16px; font-size:12.5px; opacity:0; transition:opacity .25s; pointer-events:none}
+  .list-drawer{position:absolute; top:0; right:0; height:100%; width:300px; max-width:calc(100% - 24px); background:var(--panel); border-left:1px solid var(--line); transform:translateX(100%); transition:transform .22s cubic-bezier(.4,0,.2,1); z-index:15; display:flex; flex-direction:column; box-shadow:-12px 0 32px rgba(0,0,0,.4)}
+  .list-drawer.open{transform:translateX(0)}
+  .list-drawer-head{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px 14px; border-bottom:1px solid var(--line); flex-shrink:0}
+  .list-drawer-head span{font-size:12.5px; font-weight:700; color:var(--text)}
+  .list-drawer-head button{border:0; background:transparent; color:var(--dim); font:inherit; font-size:14px; cursor:pointer; padding:3px 7px; border-radius:6px; line-height:1}
+  .list-drawer-head button:hover{background:var(--panel2); color:var(--text)}
+  .list-body{flex:1; overflow-y:auto; padding:6px 8px 14px}
+  .list-floor-h{font-size:11px; font-weight:700; color:var(--dim); letter-spacing:.05em; margin:14px 6px 6px; text-transform:uppercase}
+  .list-floor-h:first-child{margin-top:8px}
+  .list-row{display:flex; align-items:center; gap:8px; padding:7px 8px; border-radius:8px; cursor:pointer}
+  .list-row:hover{background:var(--panel2)}
+  .list-row.active{background:#1d2740; box-shadow:inset 0 0 0 1px var(--accent)}
+  .list-row .lr-main{flex:1; min-width:0}
+  .list-row .lr-name{font-size:12.5px; font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .list-row .lr-type{font-size:10.5px; color:var(--dim); margin-top:1px}
+  .list-row .lr-chips{display:flex; gap:4px; flex-shrink:0}
+  .list-row .lr-chip{font-size:10px; font-weight:700; padding:2px 6px; border-radius:5px; white-space:nowrap}
+  .list-row .lr-chip.lan{background:rgba(59,130,246,.16); color:#7ba8ff}
+  .list-row .lr-chip.tel{background:rgba(34,197,94,.16); color:#5fd68a}
+  .list-empty{padding:20px 12px; color:var(--dim); font-size:12px; text-align:center}
   .gh-status{display:flex; align-items:center; gap:6px; font-size:11.5px; font-weight:600; color:var(--dim); white-space:nowrap}
   .gh-status .dot{width:7px; height:7px; border-radius:50%; background:#5c667a; flex-shrink:0}
   .gh-status.saving .dot{background:var(--power); animation:ghPulse 1s ease-in-out infinite}
@@ -131,6 +151,7 @@
     <div class="actions">
       <button id="undoBtn" title="เลิกทำ (Ctrl+Z)" disabled>↶ เลิกทำ</button>
       <button id="redoBtn" title="ทำซ้ำ (Ctrl+Shift+Z)" disabled>↷ ทำซ้ำ</button>
+      <button id="listToggle" title="รายการอุปกรณ์ทั้งอาคาร">รายการ</button>
       <span id="ghStatus" class="gh-status"></span>
       <button id="ghSetup" title="ตั้งค่า GitHub token">GitHub</button>
       <button id="exportJson">Export JSON</button>
@@ -160,6 +181,13 @@
       <div id="stats"></div>
       <div id="hint">คลิกอุปกรณ์ด้านซ้ายแล้วคลิกวางบนพื้น · Shift ค้าง = วางต่อเนื่อง · ลากย้าย · เลือกผนัง/ประตู/ตู้แล้วคลิกลูกศรข้างๆ = ต่อชิดกันทันที · Shift+ลากบนพื้น = เลือกทั้งชุด · R หมุน · Ctrl+D ทำสำเนา · Delete ลบ · Ctrl+Z เลิกทำ · Ctrl+Shift+Z ทำซ้ำ</div>
       <div id="toast"></div>
+      <div class="list-drawer" id="listDrawer">
+        <div class="list-drawer-head">
+          <span id="listTitle">รายการอุปกรณ์</span>
+          <button id="listClose" title="ปิด">✕</button>
+        </div>
+        <div class="list-body" id="listBody"></div>
+      </div>
     </main>
     <aside class="props" id="props"></aside>
   </div>
@@ -1210,6 +1238,7 @@ document.getElementById('toggles').addEventListener('click', e=>{
 const propsEl = document.getElementById('props');
 function renderPanel(soft){
   if(!soft) flushPendingFieldUndo();
+  if(!soft) renderList();
   if(ui.selectedMulti.size>1){ renderBulkPanel(); return; }
   const it = getSel();
   if(!it){ propsEl.classList.remove('open'); propsEl.innerHTML=''; return; }
@@ -1263,6 +1292,61 @@ function renderBulkPanel(){
     '</div>';
 }
 function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+/* ---------- UI: device list drawer ---------- */
+const listDrawerEl = document.getElementById('listDrawer');
+const listBodyEl = document.getElementById('listBody');
+const listTitleEl = document.getElementById('listTitle');
+function sortListItems(items){
+  return items.slice().sort((a,b)=>{
+    const la = (a.lanNo||'').trim(), lb = (b.lanNo||'').trim();
+    if(la && lb) return la.localeCompare(lb);
+    if(la) return -1;
+    if(lb) return 1;
+    return a.name.localeCompare(b.name, 'th');
+  });
+}
+function listRowHtml(it){
+  const telDisp = (it.telNo||'').trim() || (it.ext||'').trim();
+  const chips = [];
+  if(it.lan && (it.lanNo||'').trim()) chips.push('<span class="lr-chip lan">'+esc(it.lanNo)+'</span>');
+  if(it.tel && telDisp) chips.push('<span class="lr-chip tel">'+esc(telDisp)+'</span>');
+  const active = (ui.selected===it.id || ui.selectedMulti.has(it.id)) ? ' active' : '';
+  return '<div class="list-row'+active+'" data-id="'+it.id+'">'+
+    '<div class="lr-main"><div class="lr-name">'+esc(it.name)+'</div><div class="lr-type">'+TYPE_LABEL[it.type]+'</div></div>'+
+    '<div class="lr-chips">'+chips.join('')+'</div>'+
+  '</div>';
+}
+function renderList(){
+  listTitleEl.textContent = 'รายการอุปกรณ์ · ' + state.items.length + ' ชิ้น';
+  const html = FLOORS.map(f=>{
+    const items = sortListItems(state.items.filter(i=>i.floor===f.id));
+    if(!items.length) return '';
+    return '<div class="list-floor-h">'+f.name+'</div>' + items.map(listRowHtml).join('');
+  }).join('');
+  listBodyEl.innerHTML = html || '<div class="list-empty">ยังไม่มีอุปกรณ์</div>';
+}
+function selectFromList(id){
+  const it = state.items.find(i=>i.id===id); if(!it) return;
+  const floorChanged = (ui.mode!=='floor' || ui.floor!==it.floor);
+  ui.selected = id; ui.selectedMulti.clear();
+  if(floorChanged){
+    ui.mode = 'floor'; ui.floor = it.floor;
+    renderTabs(); setCam('floor'); rebuildScene();
+  } else {
+    updateSelRing();
+  }
+  renderPanel();
+}
+listBodyEl.addEventListener('click', e=>{
+  const row = e.target.closest('.list-row'); if(!row) return;
+  selectFromList(+row.dataset.id);
+});
+document.getElementById('listToggle').onclick = ()=>{
+  listDrawerEl.classList.toggle('open');
+  if(listDrawerEl.classList.contains('open')) renderList();
+};
+document.getElementById('listClose').onclick = ()=> listDrawerEl.classList.remove('open');
 propsEl.addEventListener('focusin', e=>{
   if(e.target.dataset && e.target.dataset.k) pendingFieldUndo = snapshotState();
 });
@@ -1288,8 +1372,9 @@ propsEl.addEventListener('input', e=>{
       g.add(lab);
     }
     renderStats();
+    renderList();
   }
-  else if(SVC.includes(k)){ rebuildItemMesh(it); rebuildCables(); renderStats(); }
+  else if(SVC.includes(k)){ rebuildItemMesh(it); rebuildCables(); renderStats(); renderList(); }
   else {
     const g = itemGroups.get(it.id);
     if(g){ g.position.set(it.x, floorY(it.floor), it.z); g.rotation.y = -it.rot*Math.PI/180; }
@@ -1412,6 +1497,7 @@ document.getElementById('ghClearToken').onclick = ()=>{
 
 /* ---------- loop ---------- */
 rebuildScene();
+renderList();
 ghStatusIdle();
 ghTryAdoptRemote();
 (function loop(){
