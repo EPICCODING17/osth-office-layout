@@ -158,7 +158,7 @@
     <main>
       <div id="stage"></div>
       <div id="stats"></div>
-      <div id="hint">คลิกอุปกรณ์ด้านซ้ายแล้วคลิกวางบนพื้น · Shift ค้าง = วางต่อเนื่อง · ลากย้าย · Shift+ลากบนพื้น = เลือกทั้งชุด · R หมุน · Ctrl+D ทำสำเนา · Delete ลบ · Ctrl+Z เลิกทำ · Ctrl+Shift+Z ทำซ้ำ</div>
+      <div id="hint">คลิกอุปกรณ์ด้านซ้ายแล้วคลิกวางบนพื้น · Shift ค้าง = วางต่อเนื่อง · ลากย้าย · เลือกผนัง/ประตู/ตู้แล้วคลิกลูกศรข้างๆ = ต่อชิดกันทันที · Shift+ลากบนพื้น = เลือกทั้งชุด · R หมุน · Ctrl+D ทำสำเนา · Delete ลบ · Ctrl+Z เลิกทำ · Ctrl+Shift+Z ทำซ้ำ</div>
       <div id="toast"></div>
     </main>
     <aside class="props" id="props"></aside>
@@ -271,8 +271,9 @@ const SVC_LABEL = {lan:'LAN', tel:'TEL', power:'POWER', fax:'FAX'};
 const TYPE_LABEL = {
   workstation:'โต๊ะทำงาน + คอม', workstationL:'โต๊ะตัว L + คอม', desk:'โต๊ะเปล่า', deskL:'โต๊ะตัว L (เปล่า)', meeting:'โต๊ะประชุม', chair:'เก้าอี้',
   cabinet:'ตู้เอกสาร', monitor:'จอมอนิเตอร์', pc:'เครื่องคอม', printer:'ปริ้นเตอร์/Copier',
-  rack:'ตู้ Rack (MDF)', panel:'ตู้ไฟ', wifi:'WiFi AP', outlet:'จุดปลั๊ก/เต้ารับ', wall:'ผนังกั้น'
+  rack:'ตู้ Rack (MDF)', panel:'ตู้ไฟ', wifi:'WiFi AP', outlet:'จุดปลั๊ก/เต้ารับ', wall:'ผนังกั้น', door:'ประตู'
 };
+const CHAIN_LEN = { wall:3, door:1.1, cabinet:.8 };  // types that can chain flush-adjacent via the extend arrows
 const TYPE_DEFAULT_SVC = {
   workstation:{lan:1,tel:1,power:1,fax:0}, workstationL:{lan:1,tel:1,power:1,fax:0}, printer:{lan:1,tel:0,power:1,fax:0},
   wifi:{lan:1,tel:0,power:0,fax:0}, outlet:{lan:1,tel:0,power:1,fax:0},
@@ -571,6 +572,27 @@ const BUILDERS = {
   wall(g){
     g.add(box(3,2.5,.12,M.wall,0,1.25,0));
   },
+  door(g){
+    g.add(box(1.1,.08,.14,M.metal,0,2.18,0));                 // lintel
+    g.add(box(.08,2.2,.14,M.metal,-.55,1.1,0));                // left post
+    g.add(box(.08,2.2,.14,M.metal,.55,1.1,0));                 // right post
+    const hinge = new THREE.Vector3(-.5,0,0);                  // hinge sits at the left post
+    const openAngle = -Math.PI*0.35;                           // swings open into the room
+    const leaf = new THREE.Group();
+    leaf.add(box(.9,2.0,.04,M.woodDark,.45,1.0,0));
+    leaf.position.copy(hinge);
+    leaf.rotation.y = openAngle;
+    g.add(leaf);
+    // floor swing-arc, traced through the same rotation as the leaf so it always matches
+    const yAxis = new THREE.Vector3(0,1,0), seg = 16, pts = [];
+    for(let i=0;i<=seg;i++){
+      const tip = new THREE.Vector3(.9,0,0).applyAxisAngle(yAxis, openAngle*(i/seg)).add(hinge);
+      pts.push(new THREE.Vector3(tip.x, .01, tip.z));
+    }
+    const arc = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({color:0x5c667a, transparent:true, opacity:.5}));
+    arc.castShadow = false;
+    g.add(arc);
+  },
 };
 
 function svcStuds(g, item){
@@ -624,7 +646,7 @@ function makeLabel(item){
   sp.userData.isLabel = true;
   return sp;
 }
-const LABEL_H = {workstation:1.9, workstationL:1.9, desk:1.3, deskL:1.3, meeting:1.4, chair:1.3, cabinet:2.2, monitor:1.7, pc:1, printer:1.7, rack:2.4, panel:2.1, wifi:2.85, outlet:.8, wall:2.9};
+const LABEL_H = {workstation:1.9, workstationL:1.9, desk:1.3, deskL:1.3, meeting:1.4, chair:1.3, cabinet:2.2, monitor:1.7, pc:1, printer:1.7, rack:2.4, panel:2.1, wifi:2.85, outlet:.8, wall:2.9, door:2.5};
 
 /* ---------- scene graph ---------- */
 const buildingGroup = new THREE.Group(); scene.add(buildingGroup);
@@ -676,6 +698,64 @@ function buildItemGroup(item){
   g.position.set(item.x, floorY(item.floor), item.z);
   g.userData.itemId = item.id;
   return g;
+}
+
+const chainArrowsGroup = new THREE.Group(); scene.add(chainArrowsGroup);
+const chainArrowMat = new THREE.MeshBasicMaterial({color:0x4f7df3, transparent:true, opacity:.9});
+const chainHitMat = new THREE.MeshBasicMaterial({color:0x4f7df3, transparent:true, opacity:.001, depthWrite:false});
+function updateChainArrows(){
+  chainArrowsGroup.clear();
+  if(ui.placing || ui.mode==='all' || ui.selectedMulti.size>1) return;
+  const it = getSel();
+  if(!it) return;
+  const len = CHAIN_LEN[it.type];
+  if(!len) return;
+  const yAxis = new THREE.Vector3(0,1,0);
+  const rotQ = new THREE.Quaternion().setFromAxisAngle(yAxis, -it.rot*Math.PI/180);
+  [1,-1].forEach(dir=>{
+    const off = new THREE.Vector3(len/2+.32, 0, 0).applyQuaternion(rotQ);
+    const px = it.x+off.x*dir, pz = it.z+off.z*dir, py = floorY(it.floor)+.18;
+    const arrow = new THREE.Mesh(new THREE.ConeGeometry(.13,.34,3), chainArrowMat);
+    arrow.rotation.z = dir>0 ? -Math.PI/2 : Math.PI/2;         // lay the cone on its side, tip pointing outward
+    arrow.rotation.y = -it.rot*Math.PI/180;
+    arrow.position.set(px, py, pz);
+    arrow.userData.chainArrow = { itemId: it.id, dir };
+    arrow.castShadow = false;
+    chainArrowsGroup.add(arrow);
+    const hitZone = new THREE.Mesh(new THREE.SphereGeometry(.32,8,8), chainHitMat);  // generous, near-invisible click target
+    hitZone.position.set(px, py, pz);
+    hitZone.userData.chainArrow = { itemId: it.id, dir };
+    chainArrowsGroup.add(hitZone);
+  });
+}
+function pickChainArrow(){
+  const hits = ray.intersectObjects(chainArrowsGroup.children, true);
+  for(const h of hits){
+    let o = h.object;
+    while(o && !o.userData.chainArrow) o = o.parent;
+    if(o && o.userData.chainArrow) return o.userData.chainArrow;
+  }
+  return null;
+}
+function extendChain(fromId, dir){
+  const from = state.items.find(i=>i.id===fromId); if(!from) return;
+  const len = CHAIN_LEN[from.type]; if(!len) return;
+  const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), -from.rot*Math.PI/180);
+  const v = new THREE.Vector3(len*dir,0,0).applyQuaternion(q);
+  const nx = from.x+v.x, nz = from.z+v.z;
+  const clamped = clampPt(new THREE.Vector3(nx,0,nz));
+  if(Math.abs(clamped.x-nx)>.02 || Math.abs(clamped.z-nz)>.02){ toast('ถึงขอบห้องแล้ว'); return; }
+  pushUndo();
+  const count = state.items.filter(i=>i.type===from.type).length + 1;
+  const item = {
+    id: state.nextId++, type:from.type, name: TYPE_LABEL[from.type]+' '+count,
+    floor: from.floor, x:+nx.toFixed(2), z:+nz.toFixed(2), rot: from.rot, labelOn:true, locked:false,
+    lan:0, tel:0, power:0, fax:0, ext:'', note:'', lanNo:'', telNo:'', ...(TYPE_DEFAULT_SVC[from.type]||{})
+  };
+  state.items.push(item);
+  ui.selected = item.id; ui.selectedMulti.clear();
+  save(); rebuildScene(); renderPanel(); updateSelRing();
+  toast('ต่อ "'+item.name+'" แล้ว · คลิกลูกศรอีกครั้งเพื่อต่อไปเรื่อยๆ');
 }
 
 const cablesGroup = new THREE.Group(); scene.add(cablesGroup);
@@ -752,6 +832,7 @@ function updateSelRing(){
       ring.position.set(it.x, floorY(it.floor)+.02, it.z);
       ring.visible = true;
     });
+    updateChainArrows();
     return;
   }
   multiRings.forEach(ring=>buildingGroup.remove(ring)); multiRings.clear();
@@ -760,6 +841,7 @@ function updateSelRing(){
     selRing.visible = true;
     selRing.position.set(it.x, floorY(it.floor)+.02, it.z);
   } else if(selRing) selRing.visible = false;
+  updateChainArrows();
 }
 function getSel(){ return state.items.find(i=>i.id===ui.selected) || null; }
 function worldToScreen(x, floor, z){
@@ -775,7 +857,7 @@ const dragPlane = new THREE.Plane(new THREE.Vector3(0,1,0), 0);
 let dragging = null, ghost = null, downPos = null, moved = false;
 let draggingGroup = null, groupOrigin = null;
 let marquee = null, marqueeEl = null;
-let dragUndoPushed = false, groupDragUndoPushed = false;
+let dragUndoPushed = false, groupDragUndoPushed = false, suppressNextClick = false;
 
 function ptrUpdate(e){
   const r = renderer.domElement.getBoundingClientRect();
@@ -852,6 +934,8 @@ renderer.domElement.addEventListener('pointerdown', e=>{
   if(e.button!==0) return;
   ptrUpdate(e); downPos = {x:e.clientX,y:e.clientY}; moved = false;
   if(ui.placing) return;
+  const arrowHit = pickChainArrow();
+  if(arrowHit){ extendChain(arrowHit.itemId, arrowHit.dir); suppressNextClick = true; return; }
   const id = pickItem();
   if(id!==null && ui.mode!=='all'){
     if(ui.selectedMulti.size>1 && ui.selectedMulti.has(id)){
@@ -919,6 +1003,7 @@ renderer.domElement.addEventListener('pointermove', e=>{
   }
 });
 renderer.domElement.addEventListener('pointerup', e=>{
+  if(suppressNextClick){ suppressNextClick = false; downPos = null; return; }
   if(ui.placing){
     if(!moved){
       ptrUpdate(e);
@@ -1025,6 +1110,7 @@ function startPlacing(type){
   if(ui.mode==='all'){ toast('เลือกชั้นก่อน แล้วค่อยวางอุปกรณ์'); return; }
   stopPlacing();
   ui.placing = type;
+  chainArrowsGroup.clear();
   ghost = new THREE.Group();
   (BUILDERS[type]||BUILDERS.outlet)(ghost);
   ghost.traverse(o=>{
@@ -1038,6 +1124,7 @@ function stopPlacing(){
   ui.placing = null;
   if(ghost){ scene.remove(ghost); ghost = null; }
   document.querySelectorAll('.pal button').forEach(b=>b.classList.remove('armed'));
+  updateChainArrows();
 }
 
 /* ---------- keyboard ---------- */
@@ -1053,7 +1140,7 @@ addEventListener('keydown', e=>{
 
 /* ---------- UI: palette ---------- */
 const PAL_GROUPS = [
-  ['เฟอร์นิเจอร์', ['workstation','workstationL','desk','deskL','meeting','chair','cabinet','wall']],
+  ['เฟอร์นิเจอร์', ['workstation','workstationL','desk','deskL','meeting','chair','cabinet','wall','door']],
   ['อุปกรณ์ IT', ['monitor','pc','printer','wifi']],
   ['ระบบสาย', ['outlet','rack','panel']],
 ];
@@ -1073,6 +1160,7 @@ const GLYPHS = {
   rack:'<div style="position:absolute;left:9px;top:1px;width:9px;height:18px;background:#14171f;border:1px solid #38415a;border-radius:1px"></div><div style="position:absolute;left:11px;top:4px;width:5px;height:2px;background:#3b82f6"></div><div style="position:absolute;left:11px;top:8px;width:5px;height:2px;background:#22c55e"></div>',
   panel:'<div style="position:absolute;left:9px;top:3px;width:9px;height:12px;background:#a8afc0;border-radius:1px"></div>',
   wall:'<div style="position:absolute;left:2px;top:4px;width:22px;height:12px;background:rgba(170,180,200,.35);border:1px solid #5c667a;border-radius:1px"></div>',
+  door:'<div style="position:absolute;left:4px;top:2px;width:2px;height:16px;background:#5c667a;border-radius:1px"></div><div style="position:absolute;left:4px;top:16px;width:16px;height:2px;background:#5c667a;border-radius:1px"></div><div style="position:absolute;left:4px;top:2px;width:16px;height:2px;background:#9c7c55;border-radius:1px;transform:rotate(52deg);transform-origin:0 50%"></div>',
 };
 const palEl = document.getElementById('palette');
 palEl.innerHTML = PAL_GROUPS.map(([h,types]) =>
