@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-25T04:02:34.790Z",
+  "exportedAt": "2026-08-25T04:03:48.273Z",
   "floors": [
     {
       "id": 1,
@@ -871,20 +871,20 @@
     {
       "id": 85,
       "type": "monitor",
-      "name": " ",
+      "name": " Nook",
       "floor": 1,
       "x": -3.88,
       "z": 1.32,
       "rot": 90,
-      "labelOn": false,
-      "locked": false,
+      "labelOn": true,
+      "locked": true,
       "lan": 0,
       "tel": 0,
       "power": 0,
       "fax": 0,
       "ext": "",
       "note": "",
-      "lanNo": "",
+      "lanNo": "T08",
       "telNo": ""
     },
     {
