@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-25T03:54:44.089Z",
+  "exportedAt": "2026-08-25T04:02:34.790Z",
   "floors": [
     {
       "id": 1,
@@ -2097,7 +2097,7 @@
       "lan": 1,
       "tel": 0,
       "power": 2,
-      "fax": 0,
+      "fax": 1,
       "ext": "",
       "note": "",
       "lanNo": "",
