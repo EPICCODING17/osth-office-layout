@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-25T04:22:10.699Z",
+  "exportedAt": "2026-08-25T04:23:20.837Z",
   "floors": [
     {
       "id": 1,
@@ -1403,12 +1403,12 @@
     {
       "id": 113,
       "type": "monitor",
-      "name": "",
+      "name": "Pee",
       "floor": 1,
       "x": 7.48,
       "z": 3.26,
       "rot": 270,
-      "labelOn": false,
+      "labelOn": true,
       "locked": true,
       "lan": 0,
       "tel": 0,
@@ -1465,10 +1465,10 @@
       "x": 7.43,
       "z": 3.77,
       "rot": 0,
-      "labelOn": true,
+      "labelOn": false,
       "locked": true,
-      "lan": 1,
-      "tel": 1,
+      "lan": 0,
+      "tel": 0,
       "power": 1,
       "fax": 0,
       "ext": "",
