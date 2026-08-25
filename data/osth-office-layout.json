@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-25T04:24:25.390Z",
+  "exportedAt": "2026-08-25T04:25:40.935Z",
   "floors": [
     {
       "id": 1,
@@ -1631,12 +1631,12 @@
     {
       "id": 125,
       "type": "monitor",
-      "name": "",
+      "name": "Bird",
       "floor": 1,
       "x": 4.8,
       "z": 0.17,
       "rot": 180,
-      "labelOn": false,
+      "labelOn": true,
       "locked": true,
       "lan": 0,
       "tel": 0,
@@ -1644,7 +1644,7 @@
       "fax": 0,
       "ext": "",
       "note": "",
-      "lanNo": "",
+      "lanNo": "23",
       "telNo": ""
     },
     {
@@ -1750,10 +1750,10 @@
       "x": 4.3,
       "z": 0.47,
       "rot": 0,
-      "labelOn": true,
+      "labelOn": false,
       "locked": true,
-      "lan": 1,
-      "tel": 1,
+      "lan": 0,
+      "tel": 0,
       "power": 1,
       "fax": 0,
       "ext": "",
