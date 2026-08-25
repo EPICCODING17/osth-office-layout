@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-25T04:26:55.708Z",
+  "exportedAt": "2026-08-25T04:30:20.285Z",
   "floors": [
     {
       "id": 1,
@@ -1807,10 +1807,10 @@
       "x": 6.64,
       "z": 0.47,
       "rot": 0,
-      "labelOn": true,
+      "labelOn": false,
       "locked": true,
-      "lan": 1,
-      "tel": 1,
+      "lan": 0,
+      "tel": 0,
       "power": 1,
       "fax": 0,
       "ext": "",
