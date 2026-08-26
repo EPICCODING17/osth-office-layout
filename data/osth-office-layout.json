@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-26T09:02:27.037Z",
+  "exportedAt": "2026-08-26T09:05:34.780Z",
   "floors": [
     {
       "id": 1,
@@ -2207,7 +2207,7 @@
       "z": -1.04,
       "rot": 90,
       "labelOn": false,
-      "locked": true,
+      "locked": false,
       "lan": 0,
       "tel": 0,
       "power": 0,
@@ -2226,7 +2226,7 @@
       "z": -4.04,
       "rot": 90,
       "labelOn": false,
-      "locked": true,
+      "locked": false,
       "lan": 0,
       "tel": 0,
       "power": 0,
@@ -2613,7 +2613,8 @@
       "note": "",
       "lanNo": "",
       "telNo": "",
-      "labelOn": true
+      "labelOn": true,
+      "locked": true
     },
     {
       "id": 203,
@@ -2624,7 +2625,7 @@
       "z": 0.94,
       "rot": 0,
       "labelOn": false,
-      "locked": false,
+      "locked": true,
       "lan": 0,
       "tel": 0,
       "power": 0,
