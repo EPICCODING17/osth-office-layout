@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-26T08:51:44.055Z",
+  "exportedAt": "2026-08-26T08:52:49.653Z",
   "floors": [
     {
       "id": 1,
@@ -3203,6 +3203,25 @@
       "lan": 0,
       "tel": 0,
       "power": 1,
+      "fax": 0,
+      "ext": "",
+      "note": "",
+      "lanNo": "",
+      "telNo": ""
+    },
+    {
+      "id": 236,
+      "type": "cabinet",
+      "name": "ตู้เอกสาร 25",
+      "floor": 2,
+      "x": 3.01,
+      "z": -0.6,
+      "rot": 270,
+      "labelOn": true,
+      "locked": false,
+      "lan": 0,
+      "tel": 0,
+      "power": 0,
       "fax": 0,
       "ext": "",
       "note": "",
