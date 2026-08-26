@@ -179,7 +179,7 @@
     <main>
       <div id="stage"></div>
       <div id="stats"></div>
-      <div id="hint">คลิกอุปกรณ์ด้านซ้ายแล้วคลิกวางบนพื้น · Shift ค้าง = วางต่อเนื่อง · ลากย้าย · เลือกผนัง/ประตู/ตู้แล้วคลิกลูกศรข้างๆ = ต่อชิดกันทันที · Shift+ลากบนพื้น = เลือกทั้งชุด · R หมุน · Ctrl+D ทำสำเนา · Delete ลบ · Ctrl+Z เลิกทำ · Ctrl+Shift+Z ทำซ้ำ</div>
+      <div id="hint">คลิกอุปกรณ์ด้านซ้ายแล้วคลิกวางบนพื้น · Shift ค้าง = วางต่อเนื่อง · ลากย้าย · เลือกผนัง/ประตู/ตู้แล้วคลิกลูกศรข้างๆ = ต่อชิดกันทันที · เลือกผนังแล้วลากจุดสีส้มที่ปลาย = ยืด/หดผนัง · Shift+ลากบนพื้น = เลือกทั้งชุด · R หมุน · Ctrl+D ทำสำเนา · Delete ลบ · Ctrl+Z เลิกทำ · Ctrl+Shift+Z ทำซ้ำ</div>
       <div id="toast"></div>
       <div class="list-drawer" id="listDrawer">
         <div class="list-drawer-head">
@@ -597,8 +597,9 @@ const BUILDERS = {
   outlet(g){
     g.add(box(.28,.12,.28,M.dark,0,.06,0));
   },
-  wall(g){
-    g.add(box(3,2.5,.12,M.wall,0,1.25,0));
+  wall(g, item){
+    const len = (item && item.len) || 3;
+    g.add(box(len,2.5,.12,M.wall,0,1.25,0));
   },
   door(g){
     g.add(box(1.1,.08,.14,M.metal,0,2.18,0));                 // lintel
@@ -715,7 +716,7 @@ function buildFloorShell(f){
 
 function buildItemGroup(item){
   const g = new THREE.Group();
-  (BUILDERS[item.type]||BUILDERS.outlet)(g);
+  (BUILDERS[item.type]||BUILDERS.outlet)(g, item);
   if(item.type!=='outlet') svcStuds(g, item); else svcStuds(g, item);
   const lab = makeLabel(item);
   lab.position.y = LABEL_H[item.type]||1.5;
@@ -728,6 +729,10 @@ function buildItemGroup(item){
   return g;
 }
 
+function chainLenOf(item){
+  if(item.type==='wall') return item.len || 3;   // walls carry their own (resizable) length
+  return CHAIN_LEN[item.type];
+}
 const chainArrowsGroup = new THREE.Group(); scene.add(chainArrowsGroup);
 const chainArrowMat = new THREE.MeshBasicMaterial({color:0x4f7df3, transparent:true, opacity:.9});
 const chainHitMat = new THREE.MeshBasicMaterial({color:0x4f7df3, transparent:true, opacity:.001, depthWrite:false});
@@ -736,7 +741,7 @@ function updateChainArrows(){
   if(ui.placing || ui.mode==='all' || ui.selectedMulti.size>1) return;
   const it = getSel();
   if(!it) return;
-  const len = CHAIN_LEN[it.type];
+  const len = chainLenOf(it);
   if(!len) return;
   const yAxis = new THREE.Vector3(0,1,0);
   const rotQ = new THREE.Quaternion().setFromAxisAngle(yAxis, -it.rot*Math.PI/180);
@@ -767,7 +772,7 @@ function pickChainArrow(){
 }
 function extendChain(fromId, dir){
   const from = state.items.find(i=>i.id===fromId); if(!from) return;
-  const len = CHAIN_LEN[from.type]; if(!len) return;
+  const len = chainLenOf(from); if(!len) return;
   const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), -from.rot*Math.PI/180);
   const v = new THREE.Vector3(len*dir,0,0).applyQuaternion(q);
   const nx = from.x+v.x, nz = from.z+v.z;
@@ -778,12 +783,51 @@ function extendChain(fromId, dir){
   const item = {
     id: state.nextId++, type:from.type, name: TYPE_LABEL[from.type]+' '+count,
     floor: from.floor, x:+nx.toFixed(2), z:+nz.toFixed(2), rot: from.rot, labelOn:true, locked:false,
-    lan:0, tel:0, power:0, fax:0, ext:'', note:'', lanNo:'', telNo:'', ...(TYPE_DEFAULT_SVC[from.type]||{})
+    lan:0, tel:0, power:0, fax:0, ext:'', note:'', lanNo:'', telNo:'', ...(TYPE_DEFAULT_SVC[from.type]||{}),
+    ...(from.type==='wall' ? {len} : {})
   };
   state.items.push(item);
   ui.selected = item.id; ui.selectedMulti.clear();
   save(); rebuildScene(); renderPanel(); updateSelRing();
   toast('ต่อ "'+item.name+'" แล้ว · คลิกลูกศรอีกครั้งเพื่อต่อไปเรื่อยๆ');
+}
+
+/* ---------- wall resize handles ---------- */
+const RESIZABLE_TYPES = { wall:true };   // types that carry an editable item.len
+const WALL_MIN_LEN = .6, WALL_MAX_LEN = 14;
+const resizeHandlesGroup = new THREE.Group(); scene.add(resizeHandlesGroup);
+const resizeHandleMat = new THREE.MeshStandardMaterial({color:0xf59e0b, emissive:0xf59e0b, emissiveIntensity:.5, roughness:.4});
+const resizeHitMat = new THREE.MeshBasicMaterial({color:0xf59e0b, transparent:true, opacity:.001, depthWrite:false});
+function updateResizeHandles(){
+  resizeHandlesGroup.clear();
+  if(ui.placing || ui.mode==='all' || ui.selectedMulti.size>1) return;
+  const it = getSel();
+  if(!it || !RESIZABLE_TYPES[it.type] || it.locked) return;
+  const len = it.len || 3;
+  const yAxis = new THREE.Vector3(0,1,0);
+  const rotQ = new THREE.Quaternion().setFromAxisAngle(yAxis, -it.rot*Math.PI/180);
+  [1,-1].forEach(dir=>{
+    const off = new THREE.Vector3(len/2, 0, 0).applyQuaternion(rotQ);
+    const px = it.x+off.x*dir, pz = it.z+off.z*dir, py = floorY(it.floor)+1.25;
+    const handle = new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,1.6,10), resizeHandleMat);
+    handle.userData.resizeHandle = { itemId: it.id, dir };
+    handle.castShadow = false;
+    handle.position.set(px, py, pz);
+    resizeHandlesGroup.add(handle);
+    const hitZone = new THREE.Mesh(new THREE.CylinderGeometry(.28,.28,1.8,8), resizeHitMat);
+    hitZone.position.set(px, py, pz);
+    hitZone.userData.resizeHandle = { itemId: it.id, dir };
+    resizeHandlesGroup.add(hitZone);
+  });
+}
+function pickResizeHandle(){
+  const hits = ray.intersectObjects(resizeHandlesGroup.children, true);
+  for(const h of hits){
+    let o = h.object;
+    while(o && !o.userData.resizeHandle) o = o.parent;
+    if(o && o.userData.resizeHandle) return o.userData.resizeHandle;
+  }
+  return null;
 }
 
 const cablesGroup = new THREE.Group(); scene.add(cablesGroup);
@@ -861,6 +905,7 @@ function updateSelRing(){
       ring.visible = true;
     });
     updateChainArrows();
+    updateResizeHandles();
     return;
   }
   multiRings.forEach(ring=>buildingGroup.remove(ring)); multiRings.clear();
@@ -870,6 +915,7 @@ function updateSelRing(){
     selRing.position.set(it.x, floorY(it.floor)+.02, it.z);
   } else if(selRing) selRing.visible = false;
   updateChainArrows();
+  updateResizeHandles();
 }
 function getSel(){ return state.items.find(i=>i.id===ui.selected) || null; }
 function worldToScreen(x, floor, z){
@@ -886,6 +932,7 @@ let dragging = null, ghost = null, downPos = null, moved = false;
 let draggingGroup = null, groupOrigin = null;
 let marquee = null, marqueeEl = null;
 let dragUndoPushed = false, groupDragUndoPushed = false, suppressNextClick = false;
+let resizing = null, resizeUndoPushed = false;
 
 function ptrUpdate(e){
   const r = renderer.domElement.getBoundingClientRect();
@@ -912,6 +959,16 @@ function pickItem(){
   return null;
 }
 
+function startResize(e, itemId, dir){
+  const item = state.items.find(i=>i.id===itemId); if(!item || item.locked) return;
+  const len0 = item.len || 3;
+  const axis = new THREE.Vector3(1,0,0).applyQuaternion(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), -item.rot*Math.PI/180));
+  const anchor = new THREE.Vector3(item.x,0,item.z).addScaledVector(axis, -(len0/2)*dir);   // the fixed (opposite) edge
+  resizing = { item, dir, axis, anchor };
+  resizeUndoPushed = false;
+  controls.enabled = false;
+  renderer.domElement.setPointerCapture(e.pointerId);
+}
 function startGroupDrag(e, clickedId){
   const clickedItem = state.items.find(i=>i.id===clickedId);
   if(clickedItem && clickedItem.locked){
@@ -962,6 +1019,8 @@ renderer.domElement.addEventListener('pointerdown', e=>{
   if(e.button!==0) return;
   ptrUpdate(e); downPos = {x:e.clientX,y:e.clientY}; moved = false;
   if(ui.placing) return;
+  const resizeHit = pickResizeHandle();
+  if(resizeHit){ startResize(e, resizeHit.itemId, resizeHit.dir); return; }
   const arrowHit = pickChainArrow();
   if(arrowHit){ extendChain(arrowHit.itemId, arrowHit.dir); suppressNextClick = true; return; }
   const id = pickItem();
@@ -999,6 +1058,23 @@ renderer.domElement.addEventListener('pointermove', e=>{
     return;
   }
   if(marquee){ updateMarqueeRect(e.clientX, e.clientY); return; }
+  if(resizing){
+    const p = planePoint();
+    if(p){
+      if(!resizeUndoPushed){ pushUndo(); resizeUndoPushed = true; }
+      const { item, dir, axis, anchor } = resizing;
+      const rawLen = new THREE.Vector3().subVectors(p, anchor).dot(axis) * dir;
+      const newLen = Math.min(WALL_MAX_LEN, Math.max(WALL_MIN_LEN, rawLen));
+      const center = anchor.clone().addScaledVector(axis, (newLen/2)*dir);
+      item.len = +newLen.toFixed(2);
+      item.x = +center.x.toFixed(2); item.z = +center.z.toFixed(2);
+      rebuildItemMesh(item);
+      updateSelRing();
+      requestCableRefresh();
+      renderPanel(true);
+    }
+    return;
+  }
   if(draggingGroup){
     const p = planePoint();
     if(p && groupOrigin){
@@ -1046,6 +1122,7 @@ renderer.domElement.addEventListener('pointerup', e=>{
     return;
   }
   if(marquee){ finishMarquee(e); downPos = null; return; }
+  if(resizing){ save(); renderPanel(); resizing = null; controls.enabled = true; downPos = null; return; }
   if(draggingGroup){ save(); draggingGroup = null; groupOrigin = null; controls.enabled = true; downPos = null; return; }
   if(dragging){ save(); }
   else if(!moved){
@@ -1139,6 +1216,7 @@ function startPlacing(type){
   stopPlacing();
   ui.placing = type;
   chainArrowsGroup.clear();
+  resizeHandlesGroup.clear();
   ghost = new THREE.Group();
   (BUILDERS[type]||BUILDERS.outlet)(ghost);
   ghost.traverse(o=>{
@@ -1153,6 +1231,7 @@ function stopPlacing(){
   if(ghost){ scene.remove(ghost); ghost = null; }
   document.querySelectorAll('.pal button').forEach(b=>b.classList.remove('armed'));
   updateChainArrows();
+  updateResizeHandles();
 }
 
 /* ---------- keyboard ---------- */
@@ -1239,14 +1318,15 @@ const propsEl = document.getElementById('props');
 function renderPanel(soft){
   if(!soft) flushPendingFieldUndo();
   if(!soft) renderList();
-  if(ui.selectedMulti.size>1){ renderBulkPanel(); return; }
+  if(ui.selectedMulti.size>1){ renderBulkPanel(); resize(); return; }
   const it = getSel();
-  if(!it){ propsEl.classList.remove('open'); propsEl.innerHTML=''; return; }
+  if(!it){ propsEl.classList.remove('open'); propsEl.innerHTML=''; resize(); return; }
   if(soft && propsEl.classList.contains('open')){
-    const px = propsEl.querySelector('[data-k="x"]'), pz = propsEl.querySelector('[data-k="z"]'), pr = propsEl.querySelector('[data-k="rot"]');
+    const px = propsEl.querySelector('[data-k="x"]'), pz = propsEl.querySelector('[data-k="z"]'), pr = propsEl.querySelector('[data-k="rot"]'), pl = propsEl.querySelector('[data-k="len"]');
     if(px && document.activeElement!==px) px.value = it.x;
     if(pz && document.activeElement!==pz) pz.value = it.z;
     if(pr && document.activeElement!==pr) pr.value = it.rot;
+    if(pl && document.activeElement!==pl) pl.value = it.len || 3;
     return;
   }
   propsEl.classList.add('open');
@@ -1262,6 +1342,7 @@ function renderPanel(soft){
       '<div class="pr-row"><label>หมุน (°)</label><input data-k="rot" type="number" step="15" value="'+it.rot+'"></div>'+
       '<div class="pr-row"><label>X (ม.)</label><input data-k="x" type="number" step="0.1" value="'+it.x+'"'+(it.locked?' disabled':'')+'></div>'+
       '<div class="pr-row"><label>Z (ม.)</label><input data-k="z" type="number" step="0.1" value="'+it.z+'"'+(it.locked?' disabled':'')+'></div>'+
+      (RESIZABLE_TYPES[it.type] ? '<div class="pr-row"><label>ความยาว (ม.)</label><input data-k="len" type="number" step="0.1" min="'+WALL_MIN_LEN+'" max="'+WALL_MAX_LEN+'" value="'+(it.len||3)+'"'+(it.locked?' disabled':'')+'></div>' : '') +
     '</div>'+
     '<div class="pr-row"><label>เบอร์ EXT</label><input data-k="ext" value="'+esc(it.ext)+'" placeholder="เช่น 14 หรือ 22,23"></div>'+
     '<div class="pr-grid">'+
@@ -1278,6 +1359,7 @@ function renderPanel(soft){
       '<button data-act="dup">สำเนา</button>'+
       '<button data-act="del" class="del">ลบ</button>'+
     '</div>';
+  resize();   // opening/closing the panel resizes #stage; ResizeObserver can lag this transition, so force it here too
 }
 function renderBulkPanel(){
   const n = ui.selectedMulti.size;
@@ -1356,9 +1438,10 @@ propsEl.addEventListener('change', e=>{
 propsEl.addEventListener('input', e=>{
   const it = getSel(); if(!it) return;
   const k = e.target.dataset.k; if(!k) return;
-  if(it.locked && (k==='x'||k==='z')) return;
+  if(it.locked && (k==='x'||k==='z'||k==='len')) return;
   let v = e.target.value;
   if(['x','z','rot'].includes(k)) v = +v||0;
+  if(k==='len') v = Math.max(WALL_MIN_LEN, Math.min(WALL_MAX_LEN, +v||3));
   if(SVC.includes(k)) v = Math.max(0, Math.min(6, +v||0));
   if(k==='floor') v = +v;
   it[k] = v;
@@ -1375,6 +1458,7 @@ propsEl.addEventListener('input', e=>{
     renderList();
   }
   else if(SVC.includes(k)){ rebuildItemMesh(it); rebuildCables(); renderStats(); renderList(); }
+  else if(k==='len'){ rebuildItemMesh(it); updateSelRing(); requestCableRefresh(); }
   else {
     const g = itemGroups.get(it.id);
     if(g){ g.position.set(it.x, floorY(it.floor), it.z); g.rotation.y = -it.rot*Math.PI/180; }
@@ -1412,6 +1496,7 @@ function toggleSelLocked(){
   save();
   rebuildItemMesh(it);
   renderPanel();
+  updateSelRing();
   toast(it.locked ? 'ล็อกตำแหน่งแล้ว' : 'ปลดล็อกแล้ว');
 }
 
@@ -1451,10 +1536,10 @@ document.getElementById('exportSql').onclick = ()=>{
   let sql = '-- OSTH office layout · export ' + new Date().toISOString() + '\n' +
     'PRAGMA foreign_keys = ON;\n\n' +
     'CREATE TABLE IF NOT EXISTS floors (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL\n);\n\n' +
-    'CREATE TABLE IF NOT EXISTS items (\n  id INTEGER PRIMARY KEY,\n  floor_id INTEGER NOT NULL REFERENCES floors(id),\n  type TEXT NOT NULL,\n  name TEXT NOT NULL,\n  x REAL NOT NULL,\n  z REAL NOT NULL,\n  rot REAL NOT NULL DEFAULT 0,\n  lan INTEGER NOT NULL DEFAULT 0,\n  tel INTEGER NOT NULL DEFAULT 0,\n  power INTEGER NOT NULL DEFAULT 0,\n  fax INTEGER NOT NULL DEFAULT 0,\n  ext TEXT,\n  lan_no TEXT,\n  tel_no TEXT,\n  note TEXT,\n  label_on INTEGER NOT NULL DEFAULT 1,\n  locked INTEGER NOT NULL DEFAULT 0\n);\n\n' +
+    'CREATE TABLE IF NOT EXISTS items (\n  id INTEGER PRIMARY KEY,\n  floor_id INTEGER NOT NULL REFERENCES floors(id),\n  type TEXT NOT NULL,\n  name TEXT NOT NULL,\n  x REAL NOT NULL,\n  z REAL NOT NULL,\n  rot REAL NOT NULL DEFAULT 0,\n  lan INTEGER NOT NULL DEFAULT 0,\n  tel INTEGER NOT NULL DEFAULT 0,\n  power INTEGER NOT NULL DEFAULT 0,\n  fax INTEGER NOT NULL DEFAULT 0,\n  ext TEXT,\n  lan_no TEXT,\n  tel_no TEXT,\n  note TEXT,\n  label_on INTEGER NOT NULL DEFAULT 1,\n  locked INTEGER NOT NULL DEFAULT 0,\n  len REAL\n);\n\n' +
     'DELETE FROM items;\nDELETE FROM floors;\n\n' +
     FLOORS.map(f=>'INSERT INTO floors (id, name) VALUES ('+f.id+', '+q(f.name)+');').join('\n') + '\n\n' +
-    state.items.map(i=>'INSERT INTO items VALUES ('+[i.id,i.floor,q(i.type),q(i.name),i.x,i.z,i.rot,i.lan||0,i.tel||0,i.power||0,i.fax||0,q(i.ext),q(i.lanNo),q(i.telNo),q(i.note),i.labelOn===false?0:1,i.locked?1:0].join(', ')+');').join('\n') + '\n';
+    state.items.map(i=>'INSERT INTO items VALUES ('+[i.id,i.floor,q(i.type),q(i.name),i.x,i.z,i.rot,i.lan||0,i.tel||0,i.power||0,i.fax||0,q(i.ext),q(i.lanNo),q(i.telNo),q(i.note),i.labelOn===false?0:1,i.locked?1:0,i.len!=null?i.len:'NULL'].join(', ')+');').join('\n') + '\n';
   download('osth-office-layout.sql', sql, 'text/plain');
 };
 document.getElementById('reset').onclick = ()=>{

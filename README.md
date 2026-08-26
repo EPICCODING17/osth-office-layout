@@ -76,6 +76,16 @@ GitHub data but never pushes.
   immediately, so clicking the new arrow keeps extending the run. No manual
   positioning needed to line up a wall or a row of cabinets.
 
+## Resizable walls
+
+- Select a single **ผนังกั้น** (wall) and two small amber handles appear at
+  its ends — drag either one to stretch or shrink it (0.6m–14m), and the
+  *opposite* end stays fixed in place, even when the wall is rotated.
+- Or type an exact length into the **ความยาว (ม.)** field in the properties
+  panel — that resizes from the center instead (both ends move equally).
+- Chain-extending a resized wall (see below) copies its current length to
+  the new segment, instead of always defaulting to 3m.
+
 ## Structure
 
 - `index.html` — the app (UI + Three.js scene + all logic, single file)
@@ -139,3 +149,11 @@ tab switches automatically first.
   floor-grouped list of every item with LAN/TEL chips, click a row to
   select it precisely (auto-switches floor if needed) instead of relying
   on an imprecise click in the 3D view.
+- **2026-08-26** — resizable walls: drag an amber handle at either end of a
+  selected wall to stretch/shrink it (0.6m–14m) while the opposite end
+  stays anchored in place, or type an exact length into the new
+  **ความยาว (ม.)** field in the properties panel to resize from the center;
+  chain-extending a resized wall now copies its length to the new segment.
+  Also fixed a canvas/3D-stage sizing bug where the Three.js canvas could
+  briefly lag behind the properties panel opening/closing, causing clicks
+  and drags near the panel edge to land on stale geometry.
