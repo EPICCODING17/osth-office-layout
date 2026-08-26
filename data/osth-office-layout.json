@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-26T01:56:40.523Z",
+  "exportedAt": "2026-08-26T01:57:49.242Z",
   "floors": [
     {
       "id": 1,
@@ -2311,6 +2311,44 @@
       "note": "",
       "lanNo": "03",
       "telNo": "14"
+    },
+    {
+      "id": 182,
+      "type": "outlet",
+      "name": "",
+      "floor": 2,
+      "x": -5.7,
+      "z": 4.23,
+      "rot": 0,
+      "labelOn": false,
+      "locked": false,
+      "lan": 0,
+      "tel": 0,
+      "power": 1,
+      "fax": 0,
+      "ext": "",
+      "note": "",
+      "lanNo": "",
+      "telNo": ""
+    },
+    {
+      "id": 183,
+      "type": "outlet",
+      "name": " (copy)",
+      "floor": 2,
+      "x": -5.7,
+      "z": 3.86,
+      "rot": 0,
+      "labelOn": false,
+      "locked": false,
+      "lan": 0,
+      "tel": 0,
+      "power": 1,
+      "fax": 0,
+      "ext": "",
+      "note": "",
+      "lanNo": "",
+      "telNo": ""
     }
   ]
 }
