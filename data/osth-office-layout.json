@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-26T08:54:27.095Z",
+  "exportedAt": "2026-08-26T08:55:29.073Z",
   "floors": [
     {
       "id": 1,
@@ -2677,11 +2677,11 @@
       "type": "wall",
       "name": "",
       "floor": 2,
-      "x": 0.09,
+      "x": 0.74,
       "z": 0.37,
       "rot": 0,
       "labelOn": false,
-      "locked": true,
+      "locked": false,
       "lan": 0,
       "tel": 0,
       "power": 0,
@@ -2689,7 +2689,8 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": ""
+      "telNo": "",
+      "len": 1.7
     },
     {
       "id": 207,
