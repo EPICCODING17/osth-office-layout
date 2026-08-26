@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-26T02:14:07.821Z",
+  "exportedAt": "2026-08-26T08:30:34.689Z",
   "floors": [
     {
       "id": 1,
@@ -2567,6 +2567,25 @@
       "x": -3.98,
       "z": -4.29,
       "rot": 225,
+      "labelOn": false,
+      "locked": true,
+      "lan": 0,
+      "tel": 0,
+      "power": 0,
+      "fax": 0,
+      "ext": "",
+      "note": "",
+      "lanNo": "",
+      "telNo": ""
+    },
+    {
+      "id": 201,
+      "type": "rack",
+      "name": "",
+      "floor": 2,
+      "x": -2.08,
+      "z": 0.99,
+      "rot": 0,
       "labelOn": false,
       "locked": true,
       "lan": 0,
