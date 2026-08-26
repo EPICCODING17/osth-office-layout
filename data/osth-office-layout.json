@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-26T01:54:31.924Z",
+  "exportedAt": "2026-08-26T01:55:34.501Z",
   "floors": [
     {
       "id": 1,
@@ -2284,13 +2284,32 @@
       "rot": 90,
       "labelOn": true,
       "locked": false,
-      "lan": 0,
-      "tel": 0,
+      "lan": 1,
+      "tel": 1,
       "power": 0,
       "fax": 0,
       "ext": "",
       "note": "",
       "lanNo": "02",
+      "telNo": "14"
+    },
+    {
+      "id": 181,
+      "type": "monitor",
+      "name": "Far",
+      "floor": 2,
+      "x": -5.75,
+      "z": 3.42,
+      "rot": 90,
+      "labelOn": true,
+      "locked": false,
+      "lan": 1,
+      "tel": 1,
+      "power": 0,
+      "fax": 0,
+      "ext": "",
+      "note": "",
+      "lanNo": "03",
       "telNo": "14"
     }
   ]
