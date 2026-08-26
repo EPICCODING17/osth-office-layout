@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-26T02:12:45.972Z",
+  "exportedAt": "2026-08-26T02:14:07.821Z",
   "floors": [
     {
       "id": 1,
@@ -2543,21 +2543,40 @@
     {
       "id": 199,
       "type": "monitor",
-      "name": "จอมอนิเตอร์ 23",
+      "name": "Kasemsri",
       "floor": 2,
       "x": -3.48,
       "z": -4.07,
       "rot": 180,
       "labelOn": true,
-      "locked": false,
-      "lan": 0,
+      "locked": true,
+      "lan": 2,
       "tel": 2,
       "power": 0,
       "fax": 0,
       "ext": "",
       "note": "",
+      "lanNo": "27 | 28",
+      "telNo": "22 | 23"
+    },
+    {
+      "id": 200,
+      "type": "monitor",
+      "name": "",
+      "floor": 2,
+      "x": -3.98,
+      "z": -4.29,
+      "rot": 225,
+      "labelOn": false,
+      "locked": true,
+      "lan": 0,
+      "tel": 0,
+      "power": 0,
+      "fax": 0,
+      "ext": "",
+      "note": "",
       "lanNo": "",
-      "telNo": "22 "
+      "telNo": ""
     }
   ]
 }
