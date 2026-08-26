@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-26T08:34:15.072Z",
+  "exportedAt": "2026-08-26T08:35:53.622Z",
   "floors": [
     {
       "id": 1,
@@ -2681,7 +2681,7 @@
       "z": 0.37,
       "rot": 0,
       "labelOn": false,
-      "locked": false,
+      "locked": true,
       "lan": 0,
       "tel": 0,
       "power": 0,
@@ -2694,13 +2694,13 @@
     {
       "id": 207,
       "type": "wall",
-      "name": "ผนังกั้น 16",
+      "name": "",
       "floor": 2,
       "x": 3.09,
       "z": 0.37,
       "rot": 0,
-      "labelOn": true,
-      "locked": false,
+      "labelOn": false,
+      "locked": true,
       "lan": 0,
       "tel": 0,
       "power": 0,
@@ -2714,13 +2714,13 @@
     {
       "id": 208,
       "type": "wall",
-      "name": "ผนังกั้น 17",
+      "name": "",
       "floor": 2,
       "x": 6.09,
       "z": 0.37,
       "rot": 0,
-      "labelOn": true,
-      "locked": false,
+      "labelOn": false,
+      "locked": true,
       "lan": 0,
       "tel": 0,
       "power": 0,
@@ -2734,11 +2734,31 @@
     {
       "id": 209,
       "type": "wall",
-      "name": "ผนังกั้น 17 (copy)",
+      "name": "",
       "floor": 2,
-      "x": 8.1,
+      "x": 8.06,
       "z": 0.38,
       "rot": 0,
+      "labelOn": false,
+      "locked": true,
+      "lan": 0,
+      "tel": 0,
+      "power": 0,
+      "fax": 0,
+      "ext": "",
+      "note": "",
+      "lanNo": "",
+      "telNo": "",
+      "len": 0.96
+    },
+    {
+      "id": 210,
+      "type": "wall",
+      "name": "ผนังกั้น 19",
+      "floor": 2,
+      "x": 6.57,
+      "z": 1.96,
+      "rot": 270,
       "labelOn": true,
       "locked": false,
       "lan": 0,
@@ -2748,8 +2768,7 @@
       "ext": "",
       "note": "",
       "lanNo": "",
-      "telNo": "",
-      "len": 0.89
+      "telNo": ""
     }
   ]
 }
