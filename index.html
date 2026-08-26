@@ -292,6 +292,15 @@ async function ghTryAdoptRemote(){
 const FLOORS = [{id:1,name:'ชั้น 1'},{id:2,name:'ชั้น 2'},{id:3,name:'ชั้น 3'}];
 const W = 17, D = 11;               // floor size (m)
 const FLOOR_GAP = 4.2;              // stacked view spacing
+// Floors that physically span 2+ separate buildings: split the floor shell into
+// disconnected "islands" (own slab + walls) instead of one continuous room, so
+// cabling never implies a direct run between buildings that aren't wired together.
+const FLOOR_BUILDINGS = {
+  2: [
+    { name:'ตึก A', xMin:-W/2, xMax:-1.25 },
+    { name:'ตึก B', xMin:-0.75, xMax:W/2 },
+  ],
+};
 const SVC = ['lan','tel','power','fax'];
 const SVC_COLOR = {lan:0x3b82f6, tel:0x22c55e, power:0xf59e0b, fax:0xef4444};
 const SVC_LABEL = {lan:'LAN', tel:'TEL', power:'POWER', fax:'FAX'};
@@ -684,33 +693,69 @@ const itemGroups = new Map();
 function floorY(f){ return ui.mode==='all' ? (f-1)*FLOOR_GAP : 0; }
 function visibleFloors(){ return ui.mode==='all' ? [1,2,3] : [ui.floor]; }
 
+function buildingLabelSprite(name){
+  const c = document.createElement('canvas');
+  const x = c.getContext('2d');
+  const F = '700 36px "Noto Sans Thai", sans-serif';
+  x.font = F;
+  const w = Math.max(140, x.measureText(name).width + 56), h = 62;
+  c.width = w; c.height = h;
+  x.fillStyle = 'rgba(13,15,19,.85)';
+  x.beginPath(); x.roundRect(0,0,w,h,12); x.fill();
+  x.strokeStyle = 'rgba(120,135,165,.5)'; x.stroke();
+  x.font = F; x.fillStyle = '#e8eaf0'; x.textAlign='center'; x.textBaseline='middle';
+  x.fillText(name, w/2, h/2+2);
+  const tex = new THREE.CanvasTexture(c); tex.anisotropy = 4;
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({map:tex, depthTest:false, transparent:true}));
+  sp.renderOrder = 999;
+  const k = .0075;
+  sp.scale.set(w*k, h*k, 1);
+  return sp;
+}
+function textPlate(text, w, h, fontPx){
+  const c = document.createElement('canvas'); c.width=256; c.height=96;
+  const ctx = c.getContext('2d');
+  ctx.font=`700 ${fontPx}px "Noto Sans Thai", sans-serif`; ctx.fillStyle='rgba(139,147,165,.85)';
+  ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(text,128,48);
+  const tex = new THREE.CanvasTexture(c);
+  const plate = new THREE.Mesh(new THREE.PlaneGeometry(w,h), new THREE.MeshBasicMaterial({map:tex, transparent:true}));
+  plate.rotation.x = -Math.PI/2;
+  return plate;
+}
 function buildFloorShell(f){
   const g = new THREE.Group();
-  const slab = box(W,.18,D,new THREE.MeshStandardMaterial({color:0x232936, roughness:.9}),0,-.09,0);
-  slab.receiveShadow = true; g.add(slab);
-  // grid
-  const pts = [];
-  for(let x=-W/2; x<=W/2; x+=1){ pts.push(new THREE.Vector3(x,.002,-D/2), new THREE.Vector3(x,.002,D/2)); }
-  for(let z=-D/2; z<=D/2; z+=1){ pts.push(new THREE.Vector3(-W/2,.002,z), new THREE.Vector3(W/2,.002,z)); }
-  const grid = new THREE.LineSegments(
-    new THREE.BufferGeometry().setFromPoints(pts),
-    new THREE.LineBasicMaterial({color:0x323a4a, transparent:true, opacity:.55}));
-  g.add(grid);
-  // perimeter walls (translucent, back + left)
+  const islands = FLOOR_BUILDINGS[f] || [{ name:null, xMin:-W/2, xMax:W/2 }];
   const wallMat = new THREE.MeshStandardMaterial({color:0x7f8aa3, transparent:true, opacity:.10, roughness:.9, depthWrite:false});
-  const wb = box(W,2.7,.1,wallMat,0,1.35,-D/2); wb.castShadow=false; g.add(wb);
-  const wl = box(.1,2.7,D,wallMat,-W/2,1.35,0); wl.castShadow=false; g.add(wl);
-  // floor name plate
-  const c = document.createElement('canvas'); c.width=256; c.height=96;
-  const x = c.getContext('2d');
-  x.font='700 64px "Noto Sans Thai", sans-serif'; x.fillStyle='#5a6residual'; // replaced below
-  x.clearRect(0,0,256,96);
-  x.font='700 60px "Noto Sans Thai", sans-serif'; x.fillStyle='rgba(139,147,165,.85)';
-  x.textAlign='center'; x.textBaseline='middle'; x.fillText(FLOORS[f-1].name,128,48);
-  const tex = new THREE.CanvasTexture(c);
-  const plate = new THREE.Mesh(new THREE.PlaneGeometry(2.4,.9), new THREE.MeshBasicMaterial({map:tex, transparent:true}));
-  plate.rotation.x = -Math.PI/2; plate.position.set(-W/2+1.6,.01,D/2-.8);
-  g.add(plate);
+  islands.forEach((isl, idx)=>{
+    const iw = isl.xMax - isl.xMin, cx = (isl.xMin+isl.xMax)/2;
+    const slab = box(iw,.18,D,new THREE.MeshStandardMaterial({color:0x232936, roughness:.9}),cx,-.09,0);
+    slab.receiveShadow = true; g.add(slab);
+    // grid, bounded to this island only
+    const pts = [];
+    for(let x=isl.xMin; x<=isl.xMax; x+=1){ pts.push(new THREE.Vector3(x,.002,-D/2), new THREE.Vector3(x,.002,D/2)); }
+    for(let z=-D/2; z<=D/2; z+=1){ pts.push(new THREE.Vector3(isl.xMin,.002,z), new THREE.Vector3(isl.xMax,.002,z)); }
+    g.add(new THREE.LineSegments(
+      new THREE.BufferGeometry().setFromPoints(pts),
+      new THREE.LineBasicMaterial({color:0x323a4a, transparent:true, opacity:.55})));
+    // perimeter walls (translucent): back, left, and right on every island — including
+    // the edges that face a neighboring island's gap, so the gap between buildings
+    // reads as an actual outdoor break bounded by two walls, not a hole in one room
+    const wb = box(iw,2.7,.1,wallMat,cx,1.35,-D/2); wb.castShadow=false; g.add(wb);
+    const wl = box(.1,2.7,D,wallMat,isl.xMin,1.35,0); wl.castShadow=false; g.add(wl);
+    const wr = box(.1,2.7,D,wallMat,isl.xMax,1.35,0); wr.castShadow=false; g.add(wr);
+    // building name — a billboard sprite (always faces camera, high-contrast pill,
+    // same treatment as item name labels) so it reads at a glance from any angle,
+    // unlike a flat floor decal that all but disappears at a low iso angle
+    if(isl.name){
+      const label = buildingLabelSprite(isl.name);
+      label.position.set(cx, 3.35, 0);
+      g.add(label);
+    }
+  });
+  // floor name plate (front-left, unchanged position regardless of building split)
+  const floorPlate = textPlate(FLOORS[f-1].name, 2.4, .9, 60);
+  floorPlate.position.set(-W/2+1.6,.01,D/2-.8);
+  g.add(floorPlate);
   return g;
 }
 
@@ -831,15 +876,28 @@ function pickResizeHandle(){
 }
 
 const cablesGroup = new THREE.Group(); scene.add(cablesGroup);
+function nearestOf(it, candidates){
+  let best=null, bestD=Infinity;
+  candidates.forEach(c=>{
+    const dx=c.x-it.x, dz=c.z-it.z, dd=dx*dx+dz*dz;
+    if(dd<bestD){ bestD=dd; best=c; }
+  });
+  return best;
+}
 function rebuildCables(){
   cablesGroup.clear();
   visibleFloors().forEach(f=>{
     const items = state.items.filter(i=>i.floor===f);
-    const rack = items.find(i=>i.type==='rack');
-    const panel = items.find(i=>i.type==='panel') || rack;
+    // A floor can have more than one rack/panel (e.g. a floor split across separate
+    // buildings, see FLOOR_BUILDINGS) — route each device to whichever is nearest,
+    // never to "the first one found", so cables never imply a cross-building run.
+    const racks = items.filter(i=>i.type==='rack');
+    const panels = items.filter(i=>i.type==='panel');
     const y0 = floorY(f);
     let lane = 0;
     items.forEach(it=>{
+      const rack = nearestOf(it, racks);
+      const panel = nearestOf(it, panels) || rack;
       SVC.forEach((s,si)=>{
         const n = it[s]||0;
         if(!n || !ui.show[s]) return;
