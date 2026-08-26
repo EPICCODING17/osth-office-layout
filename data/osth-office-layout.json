@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-26T01:58:54.936Z",
+  "exportedAt": "2026-08-26T02:00:01.440Z",
   "floors": [
     {
       "id": 1,
@@ -2372,13 +2372,32 @@
     {
       "id": 185,
       "type": "chair",
-      "name": "เก้าอี้ 18",
+      "name": "",
       "floor": 2,
       "x": -6.47,
       "z": 3.36,
       "rot": 90,
-      "labelOn": true,
-      "locked": false,
+      "labelOn": false,
+      "locked": true,
+      "lan": 0,
+      "tel": 0,
+      "power": 0,
+      "fax": 0,
+      "ext": "",
+      "note": "",
+      "lanNo": "",
+      "telNo": ""
+    },
+    {
+      "id": 186,
+      "type": "chair",
+      "name": "",
+      "floor": 2,
+      "x": -6.52,
+      "z": 4.86,
+      "rot": 90,
+      "labelOn": false,
+      "locked": true,
       "lan": 0,
       "tel": 0,
       "power": 0,
