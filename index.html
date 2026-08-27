@@ -113,6 +113,8 @@
   .gh-modal button.primary{background:var(--accent); border-color:var(--accent); color:#fff}
   .gh-modal button.primary:hover{background:#3f6de0}
   .gh-modal button.danger{color:#f0a0a0; border-color:#4a2a2e}
+  .actions button.unlocked{color:var(--tel); border-color:#1f4a30}
+  .palette.readonly, .props.readonly{opacity:.5; pointer-events:none}
   aside.props{width:250px; background:var(--panel); border-left:1px solid var(--line); padding:12px; overflow-y:auto; flex-shrink:0; display:none}
   aside.props.open{display:block}
   .pr-type{font-size:11px; font-weight:700; color:var(--dim); letter-spacing:.05em}
@@ -152,6 +154,7 @@
       <button id="undoBtn" title="เลิกทำ (Ctrl+Z)" disabled>↶ เลิกทำ</button>
       <button id="redoBtn" title="ทำซ้ำ (Ctrl+Shift+Z)" disabled>↷ ทำซ้ำ</button>
       <button id="listToggle" title="รายการอุปกรณ์ทั้งอาคาร">รายการ</button>
+      <button id="lockBtn" title="ล็อก/ปลดล็อกการแก้ไข">🔒 ล็อกอยู่</button>
       <span id="ghStatus" class="gh-status"></span>
       <button id="ghSetup" title="ตั้งค่า GitHub token">GitHub</button>
       <button id="exportJson">Export JSON</button>
@@ -172,6 +175,18 @@
         <button id="ghSaveToken" class="primary">บันทึก</button>
       </div>
       <div class="row" style="margin-top:8px"><button id="ghModalClose">ปิด</button></div>
+    </div>
+  </div>
+  <div id="pinModal" class="gh-modal-wrap" hidden>
+    <div class="gh-modal">
+      <h2>ใส่ PIN เพื่อแก้ไขผัง</h2>
+      <p>หน้านี้เปิดให้ดูได้ปกติ แต่ต้องใส่ PIN ก่อนถึงจะย้าย/เพิ่ม/ลบ/แก้ไขอุปกรณ์ได้ —
+        ปลดล็อกแล้วจะจำไว้ในเบราว์เซอร์นี้จนกว่าจะกดล็อกอีกครั้ง</p>
+      <input id="pinInput" type="password" inputmode="numeric" placeholder="PIN" autocomplete="off">
+      <div class="row">
+        <button id="pinModalClose">ปิด</button>
+        <button id="pinSubmit" class="primary">ปลดล็อก</button>
+      </div>
     </div>
   </div>
   <div id="body">
@@ -428,6 +443,7 @@ function applySnapshot(snap){
   save(); rebuildScene(); renderPanel();
 }
 function undo(){
+  if(!unlocked){ blockedToast(); return; }
   if(!undoStack.length) return;
   redoStack.push(snapshotState());
   applySnapshot(undoStack.pop());
@@ -435,6 +451,7 @@ function undo(){
   toast('เลิกทำ');
 }
 function redo(){
+  if(!unlocked){ blockedToast(); return; }
   if(!redoStack.length) return;
   undoStack.push(snapshotState());
   applySnapshot(redoStack.pop());
@@ -1089,14 +1106,14 @@ renderer.domElement.addEventListener('pointerdown', e=>{
   if(e.button!==0) return;
   ptrUpdate(e); downPos = {x:e.clientX,y:e.clientY}; moved = false;
   if(ui.placing) return;
-  const resizeHit = pickResizeHandle();
+  const resizeHit = unlocked && pickResizeHandle();
   if(resizeHit){ startResize(e, resizeHit.itemId, resizeHit.dir); return; }
-  const arrowHit = pickChainArrow();
+  const arrowHit = unlocked && pickChainArrow();
   if(arrowHit){ extendChain(arrowHit.itemId, arrowHit.dir); suppressNextClick = true; return; }
   const id = pickItem();
   if(id!==null && ui.mode!=='all'){
     if(ui.selectedMulti.size>1 && ui.selectedMulti.has(id)){
-      startGroupDrag(e, id);
+      if(unlocked) startGroupDrag(e, id);
     } else if(e.shiftKey){
       if(ui.selectedMulti.size<=1 && ui.selected!==null) ui.selectedMulti.add(ui.selected);
       if(ui.selectedMulti.has(id)) ui.selectedMulti.delete(id); else ui.selectedMulti.add(id);
@@ -1107,7 +1124,9 @@ renderer.domElement.addEventListener('pointerdown', e=>{
       ui.selectedMulti.clear();
       ui.selected = id; renderPanel(); updateSelRing();
       const item = state.items.find(i=>i.id===id);
-      if(item && item.locked){
+      if(!unlocked){
+        // selection above still applies — just don't arm a drag
+      } else if(item && item.locked){
         toast('ชิ้นนี้ล็อกตำแหน่งอยู่ · ปลดล็อกก่อนถึงจะย้ายได้');
       } else {
         dragging = item;
@@ -1308,6 +1327,7 @@ function stopPlacing(){
 addEventListener('keydown', e=>{
   if(e.target.tagName==='INPUT' || e.target.tagName==='SELECT') return;
   if(e.key==='Escape'){ stopPlacing(); ui.selected=null; ui.selectedMulti.clear(); renderPanel(); updateSelRing(); }
+  if(!unlocked) return;
   if(e.key==='Delete' || e.key==='Backspace'){ if(ui.selectedMulti.size>1) deleteMulti(); else deleteSel(); }
   if(e.key==='r' || e.key==='R'){ if(ui.selectedMulti.size>1) rotateMulti(); else rotateSel(); }
   if((e.ctrlKey||e.metaKey) && (e.key==='d'||e.key==='D')){ e.preventDefault(); if(ui.selectedMulti.size>1) duplicateMulti(); else duplicateSel(); }
@@ -1347,6 +1367,7 @@ palEl.innerHTML = PAL_GROUPS.map(([h,types]) =>
 ).join('');
 palEl.addEventListener('click', e=>{
   const b = e.target.closest('button'); if(!b) return;
+  if(!unlocked){ blockedToast(); return; }
   if(ui.placing===b.dataset.type) stopPlacing(); else startPlacing(b.dataset.type);
 });
 
@@ -1649,6 +1670,58 @@ document.getElementById('ghClearToken').onclick = ()=>{
   setGhToken(''); ghTokenInput.value = ''; ghStatusIdle();
   toast('ยกเลิกการเชื่อมต่อ GitHub แล้ว');
 };
+
+/* ---------- UI: edit-lock PIN ----------
+   Viewing (pan/zoom/select/export) always stays open to anyone with the link;
+   only actions that mutate state.items (or the GitHub token) require the PIN.
+   This is a client-side deterrent for casual office viewers, not real access
+   control — anyone with devtools can bypass it, same tradeoff as the GitHub
+   token already living in localStorage. */
+const EDIT_PIN = '171239';
+const LOCK_KEY = 'osth-edit-unlocked';
+let unlocked = localStorage.getItem(LOCK_KEY) === '1';
+const lockBtn = document.getElementById('lockBtn');
+const resetBtn = document.getElementById('reset');
+const ghSetupBtn = document.getElementById('ghSetup');
+function blockedToast(){ toast('ผังถูกล็อกไว้ · กด 🔒 มุมขวาบนแล้วใส่ PIN ก่อนถึงจะแก้ไขได้'); }
+function applyLockUI(){
+  palEl.classList.toggle('readonly', !unlocked);
+  propsEl.classList.toggle('readonly', !unlocked);
+  resetBtn.disabled = !unlocked;
+  ghSetupBtn.disabled = !unlocked;
+  lockBtn.textContent = unlocked ? '🔓 ปลดล็อกแล้ว' : '🔒 ล็อกอยู่';
+  lockBtn.classList.toggle('unlocked', unlocked);
+}
+const pinModalWrap = document.getElementById('pinModal');
+const pinInput = document.getElementById('pinInput');
+function openPinModal(){
+  pinInput.value = '';
+  pinModalWrap.hidden = false;
+  requestAnimationFrame(()=>{ pinModalWrap.classList.add('open'); pinInput.focus(); });
+}
+function closePinModal(){
+  pinModalWrap.classList.remove('open');
+  setTimeout(()=>{ pinModalWrap.hidden = true; }, 180);
+}
+function trySubmitPin(){
+  if(pinInput.value.trim()===EDIT_PIN){
+    unlocked = true; localStorage.setItem(LOCK_KEY,'1');
+    applyLockUI(); closePinModal();
+    toast('ปลดล็อกแล้ว');
+  } else {
+    toast('PIN ไม่ถูกต้อง');
+  }
+}
+lockBtn.onclick = ()=>{
+  if(unlocked){ unlocked = false; localStorage.removeItem(LOCK_KEY); applyLockUI(); toast('ล็อกแล้ว'); }
+  else openPinModal();
+};
+document.getElementById('pinModalClose').onclick = closePinModal;
+document.getElementById('pinSubmit').onclick = trySubmitPin;
+pinInput.addEventListener('keydown', e=>{ if(e.key==='Enter') trySubmitPin(); });
+pinModalWrap.addEventListener('click', e=>{ if(e.target===pinModalWrap) closePinModal(); });
+addEventListener('keydown', e=>{ if(e.key==='Escape' && !pinModalWrap.hidden) closePinModal(); });
+applyLockUI();
 
 /* ---------- loop ---------- */
 rebuildScene();
