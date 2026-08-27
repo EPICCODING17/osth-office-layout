@@ -304,6 +304,14 @@ const FLOOR_BUILDINGS = {
     { name:'ตึก A', xMin:-W/2, xMax:-1.25 },
     { name:'ตึก B', xMin:-0.75, xMax:W/2 },
   ],
+  // Floor 3 has no items yet (Pong will populate it later) — same building-split
+  // style as floor 2 (separate power/rack per building, no real cross-building
+  // link), placed as a neutral centered default. Move xMin/xMax here once real
+  // furniture goes in and the actual boundary/landmark is known.
+  3: [
+    { name:'ตึก A', xMin:-W/2, xMax:-0.25 },
+    { name:'ตึก B', xMin:0.25, xMax:W/2 },
+  ],
 };
 const SVC = ['lan','tel','power','fax'];
 const SVC_COLOR = {lan:0x3b82f6, tel:0x22c55e, power:0xf59e0b, fax:0xef4444};
