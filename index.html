@@ -6,6 +6,7 @@
 <title>OSTH — ผังเดินสาย LAN / TEL / POWER / FAX (3D)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"></script>
 <script type="importmap">
 {
   "imports": {
@@ -90,6 +91,9 @@
   .list-row .lr-chip{font-size:10px; font-weight:700; padding:2px 6px; border-radius:5px; white-space:nowrap}
   .list-row .lr-chip.lan{background:rgba(59,130,246,.16); color:#7ba8ff}
   .list-row .lr-chip.tel{background:rgba(34,197,94,.16); color:#5fd68a}
+  .list-row .lr-chip.age-ok{background:rgba(34,197,94,.16); color:#5fd68a}
+  .list-row .lr-chip.age-warn{background:rgba(245,158,11,.16); color:#f5b95c}
+  .list-row .lr-chip.age-bad{background:rgba(239,68,68,.16); color:#f0a0a0}
   .list-empty{padding:20px 12px; color:var(--dim); font-size:12px; text-align:center}
   .gh-status{display:flex; align-items:center; gap:6px; font-size:11.5px; font-weight:600; color:var(--dim); white-space:nowrap}
   .gh-status .dot{width:7px; height:7px; border-radius:50%; background:#5c667a; flex-shrink:0}
@@ -123,6 +127,11 @@
   .pr-row input,.pr-row select{width:100%; background:var(--panel2); border:1px solid var(--line); color:var(--text); font:inherit; font-size:13px; border-radius:7px; padding:6px 8px}
   .pr-row input:focus,.pr-row select:focus{outline:none; border-color:var(--accent)}
   .pr-row input:disabled{opacity:.4; cursor:not-allowed}
+  .age-badge{display:flex; align-items:center; gap:6px; margin-top:10px; padding:6px 10px; border-radius:7px; font-size:12px; font-weight:600}
+  .age-badge .dot{width:7px; height:7px; border-radius:50%; background:currentColor; flex-shrink:0}
+  .age-badge.ok{background:rgba(34,197,94,.14); color:#5fd68a}
+  .age-badge.warn{background:rgba(245,158,11,.14); color:#f5b95c}
+  .age-badge.bad{background:rgba(239,68,68,.14); color:#f0a0a0}
   .pr-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px}
   .svc{display:grid; grid-template-columns:1fr 1fr; gap:8px}
   .svc .pr-row label i{display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:5px; vertical-align:0}
@@ -159,6 +168,7 @@
       <button id="ghSetup" title="ตั้งค่า GitHub token">GitHub</button>
       <button id="exportJson">Export JSON</button>
       <button id="exportSql">Export SQL</button>
+      <button id="exportXlsx" title="รายชื่อ + เลขสาย LAN + เบอร์โทร + ปลั๊กพ่วง ต่อคน">⇩ Export LAN/เบอร์</button>
       <button id="reset" class="warn" title="ล้างผังและกลับไปใช้ข้อมูลจาก Excel">รีเซ็ต</button>
     </div>
   </header>
@@ -294,7 +304,7 @@ async function ghTryAdoptRemote(){
     const pendingLocalEdit = hasToken && (state.updatedAt||0) > (state.ghSyncedAt||0);
     if(pendingLocalEdit) return;                                   // don't clobber unsynced edits — next debounce will push them
     if(hasToken && remoteAt <= (state.ghSyncedAt||0)) return;       // this browser is already caught up
-    remote.items.forEach(i=>{ if(i.lanNo===undefined) i.lanNo=''; if(i.telNo===undefined) i.telNo=''; if(i.labelOn===undefined) i.labelOn=true; });
+    remote.items.forEach(i=>{ if(i.lanNo===undefined) i.lanNo=''; if(i.telNo===undefined) i.telNo=''; if(i.labelOn===undefined) i.labelOn=true; if(i.linkOutletId===undefined) i.linkOutletId=''; if(i.installDate===undefined) i.installDate=''; });
     state.items = remote.items;
     state.nextId = Math.max(1, ...remote.items.map(i=>i.id)) + 1;
     state.ghSyncedAt = remoteAt || Date.now();
@@ -335,8 +345,11 @@ const SVC_LABEL = {lan:'LAN', tel:'TEL', power:'POWER', fax:'FAX'};
 const TYPE_LABEL = {
   workstation:'โต๊ะทำงาน + คอม', workstationL:'โต๊ะตัว L + คอม', desk:'โต๊ะเปล่า', deskL:'โต๊ะตัว L (เปล่า)', meeting:'โต๊ะประชุม', chair:'เก้าอี้',
   cabinet:'ตู้เอกสาร', monitor:'จอมอนิเตอร์', pc:'เครื่องคอม', printer:'ปริ้นเตอร์/Copier',
-  rack:'ตู้ Rack (MDF)', panel:'ตู้ไฟ', wifi:'WiFi AP', outlet:'จุดปลั๊ก/เต้ารับ', wall:'ผนังกั้น', door:'ประตู'
+  rack:'ตู้ Rack (MDF)', panel:'ตู้ไฟ', wifi:'WiFi AP', outlet:'จุดปลั๊ก/เต้ารับ', powerstrip:'ปลั๊กพ่วง', wall:'ผนังกั้น', door:'ประตู'
 };
+// เกณฑ์อายุการใช้งานปลั๊กพ่วง (เดือน) สำหรับ badge เตือน — ok < 24, warn 24-35, bad >= 36 (เกิน 3 ปี)
+const PLUG_AGE_WARN_MONTHS = 24, PLUG_AGE_BAD_MONTHS = 36;
+const AGE_LEVEL_LABEL = { ok:'ปกติ', warn:'ใกล้ครบอายุแนะนำ (2–3 ปี)', bad:'เกินอายุแนะนำ ควรเปลี่ยน (เกิน 3 ปี)' };
 const CHAIN_LEN = { wall:3, door:1.1, cabinet:.8 };  // types that can chain flush-adjacent via the extend arrows
 const TYPE_DEFAULT_SVC = {
   workstation:{lan:1,tel:1,power:1,fax:0}, workstationL:{lan:1,tel:1,power:1,fax:0}, printer:{lan:1,tel:0,power:1,fax:0},
@@ -349,6 +362,7 @@ function seedItems(){
   const it = (type,name,floor,x,z,rot=0,ex={}) => ({
     id:id++, type, name, floor, x, z, rot, labelOn:true, locked:false,
     lan:0, tel:0, power:0, fax:0, ext:'', note:'', lanNo:'', telNo:'',
+    linkOutletId:'', installDate:'',
     ...(TYPE_DEFAULT_SVC[type]||{}), ...ex
   });
   const list = [
@@ -405,13 +419,34 @@ function numberCables(items){
     if((i.tel>0||i.fax>0) && !(i.telNo||'').trim() && (i.ext||'').trim() && i.ext!=='-') i.telNo = i.ext;
   });
 }
+// คำนวณอายุการใช้งานปลั๊กพ่วงจากวันที่ติดตั้ง -> วันนี้; คืน null ถ้ายังไม่ระบุวันที่
+function plugAge(dateStr){
+  if(!(dateStr||'').trim()) return null;
+  const installed = new Date(dateStr+'T00:00:00');
+  if(isNaN(installed.getTime())) return null;
+  const now = new Date();
+  let months = (now.getFullYear()-installed.getFullYear())*12 + (now.getMonth()-installed.getMonth());
+  if(now.getDate() < installed.getDate()) months--;
+  months = Math.max(0, months);
+  const years = Math.floor(months/12), rem = months%12;
+  const level = months>=PLUG_AGE_BAD_MONTHS ? 'bad' : months>=PLUG_AGE_WARN_MONTHS ? 'warn' : 'ok';
+  const label = (years>0 ? years+' ปี ' : '') + (rem>0 || years===0 ? rem+' เดือน' : '');
+  return { months, years, remMonths:rem, level, label: label.trim() };
+}
+// หา "ตึก" ของไอเทมจากตำแหน่ง x เทียบกับ island ของชั้นนั้นใน FLOOR_BUILDINGS
+function buildingOfItem(it){
+  const islands = FLOOR_BUILDINGS[it.floor];
+  if(!islands) return '';
+  const isl = islands.find(i=> it.x>=i.xMin && it.x<=i.xMax);
+  return (isl && isl.name) || '';
+}
 
 let state = load();
 function load(){
   try{
     const raw = localStorage.getItem(LS_KEY);
     if(raw){ const s = JSON.parse(raw); if(Array.isArray(s.items)){
-      s.items.forEach(i=>{ if(i.lanNo===undefined) i.lanNo=''; if(i.telNo===undefined) i.telNo=''; if(i.labelOn===undefined) i.labelOn=true; });
+      s.items.forEach(i=>{ if(i.lanNo===undefined) i.lanNo=''; if(i.telNo===undefined) i.telNo=''; if(i.labelOn===undefined) i.labelOn=true; if(i.linkOutletId===undefined) i.linkOutletId=''; if(i.installDate===undefined) i.installDate=''; });
       if(!s.items.some(i=>(i.lanNo||'').trim())) numberCables(s.items);
       return s;
     } }
@@ -635,6 +670,12 @@ const BUILDERS = {
   outlet(g){
     g.add(box(.28,.12,.28,M.dark,0,.06,0));
   },
+  powerstrip(g){
+    g.add(box(.6,.045,.11,M.dark,0,.05,0));                                 // ตัวปลั๊กพ่วง
+    for(let i=0;i<4;i++) g.add(box(.06,.01,.05,M.metal,-.21+i*.14,.076,0)); // ช่องเสียบ
+    g.add(box(.18,.015,.015,M.dark,-.5,.05,0));                            // สายพ่วงไปจุดปลั๊กเดิม
+    g.add(box(.14,.03,.03,M.body,-.66,.05,0));                             // หัวปลั๊ก
+  },
   wall(g, item){
     const len = (item && item.len) || 3;
     g.add(box(len,2.5,.12,M.wall,0,1.25,0));
@@ -713,7 +754,7 @@ function makeLabel(item){
   sp.userData.isLabel = true;
   return sp;
 }
-const LABEL_H = {workstation:1.9, workstationL:1.9, desk:1.3, deskL:1.3, meeting:1.4, chair:1.3, cabinet:2.2, monitor:1.7, pc:1, printer:1.7, rack:2.4, panel:2.1, wifi:2.85, outlet:.8, wall:2.9, door:2.5};
+const LABEL_H = {workstation:1.9, workstationL:1.9, desk:1.3, deskL:1.3, meeting:1.4, chair:1.3, cabinet:2.2, monitor:1.7, pc:1, printer:1.7, rack:2.4, panel:2.1, wifi:2.85, outlet:.8, powerstrip:.85, wall:2.9, door:2.5};
 
 /* ---------- scene graph ---------- */
 const buildingGroup = new THREE.Group(); scene.add(buildingGroup);
@@ -1234,7 +1275,8 @@ function addItem(type, x, z){
   pushUndo();
   const item = {
     id: state.nextId++, type, name: TYPE_LABEL[type], floor: ui.floor, x, z, rot: 0, labelOn:true, locked:false,
-    lan:0, tel:0, power:0, fax:0, ext:'', note:'', lanNo:'', telNo:'', ...(TYPE_DEFAULT_SVC[type]||{})
+    lan:0, tel:0, power:0, fax:0, ext:'', note:'', lanNo:'', telNo:'',
+    linkOutletId:'', installDate:'', ...(TYPE_DEFAULT_SVC[type]||{})
   };
   const count = state.items.filter(i=>i.type===type).length + 1;
   item.name = TYPE_LABEL[type] + ' ' + count;
@@ -1339,7 +1381,7 @@ addEventListener('keydown', e=>{
 const PAL_GROUPS = [
   ['เฟอร์นิเจอร์', ['workstation','workstationL','desk','deskL','meeting','chair','cabinet','wall','door']],
   ['อุปกรณ์ IT', ['monitor','pc','printer','wifi']],
-  ['ระบบสาย', ['outlet','rack','panel']],
+  ['ระบบสาย', ['outlet','powerstrip','rack','panel']],
 ];
 const GLYPHS = {
   workstation:'<div style="position:absolute;left:2px;top:8px;width:22px;height:4px;background:#9c7c55;border-radius:1px"></div><div style="position:absolute;left:6px;top:1px;width:12px;height:7px;background:#3f4c66;border-radius:1px"></div>',
@@ -1354,6 +1396,7 @@ const GLYPHS = {
   printer:'<div style="position:absolute;left:6px;top:5px;width:14px;height:11px;background:#c8ccd6;border-radius:1px"></div><div style="position:absolute;left:8px;top:2px;width:10px;height:3px;background:#3a4150"></div>',
   wifi:'<div style="position:absolute;left:12px;top:6px;width:2px;height:13px;background:#5c667a"></div><div style="position:absolute;left:7px;top:2px;width:12px;height:4px;background:#e8eaf0;border-radius:2px"></div>',
   outlet:'<div style="position:absolute;left:8px;top:7px;width:10px;height:7px;background:#23262e;border:1px solid #5c667a;border-radius:1px"></div><div style="position:absolute;left:4px;top:16px;width:4px;height:3px;background:#3b82f6;border-radius:1px"></div><div style="position:absolute;left:10px;top:16px;width:4px;height:3px;background:#f59e0b;border-radius:1px"></div>',
+  powerstrip:'<div style="position:absolute;left:9px;top:6px;width:9px;height:7px;background:#23262e;border:1px solid #5c667a;border-radius:1px"></div><div style="position:absolute;left:11px;top:16px;width:4px;height:3px;background:#f59e0b;border-radius:1px"></div><div style="position:absolute;left:0px;top:8px;width:8px;height:2px;background:#5c667a;border-radius:1px"></div><div style="position:absolute;left:-1px;top:5px;width:3px;height:8px;background:#23262e;border:1px solid #f59e0b;border-radius:1px"></div>',
   rack:'<div style="position:absolute;left:9px;top:1px;width:9px;height:18px;background:#14171f;border:1px solid #38415a;border-radius:1px"></div><div style="position:absolute;left:11px;top:4px;width:5px;height:2px;background:#3b82f6"></div><div style="position:absolute;left:11px;top:8px;width:5px;height:2px;background:#22c55e"></div>',
   panel:'<div style="position:absolute;left:9px;top:3px;width:9px;height:12px;background:#a8afc0;border-radius:1px"></div>',
   wall:'<div style="position:absolute;left:2px;top:4px;width:22px;height:12px;background:rgba(170,180,200,.35);border:1px solid #5c667a;border-radius:1px"></div>',
@@ -1435,6 +1478,7 @@ function renderPanel(soft){
       '<div class="pr-row"><label>Z (ม.)</label><input data-k="z" type="number" step="0.1" value="'+it.z+'"'+(it.locked?' disabled':'')+'></div>'+
       (RESIZABLE_TYPES[it.type] ? '<div class="pr-row"><label>ความยาว (ม.)</label><input data-k="len" type="number" step="0.1" min="'+WALL_MIN_LEN+'" max="'+WALL_MAX_LEN+'" value="'+(it.len||3)+'"'+(it.locked?' disabled':'')+'></div>' : '') +
     '</div>'+
+    (it.type==='powerstrip' ? powerstripFieldsHtml(it) :
     '<div class="pr-row"><label>เบอร์ EXT</label><input data-k="ext" value="'+esc(it.ext)+'" placeholder="เช่น 14 หรือ 22,23"></div>'+
     '<div class="pr-grid">'+
       '<div class="pr-row"><label><i style="display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;background:#3b82f6"></i>เลขสาย LAN</label><input data-k="lanNo" value="'+esc(it.lanNo)+'" placeholder="เช่น 1F-03"></div>'+
@@ -1443,7 +1487,7 @@ function renderPanel(soft){
     '<div class="pr-h" style="margin-top:14px; font-size:11px; font-weight:700; color:var(--dim)">จุดลงสาย (จำนวนเส้น)</div>'+
     '<div class="svc">'+SVC.map(s=>
       '<div class="pr-row"><label><i style="background:#'+SVC_COLOR[s].toString(16).padStart(6,'0')+'"></i>'+SVC_LABEL[s]+'</label><input data-k="'+s+'" type="number" min="0" max="6" value="'+(it[s]||0)+'"></div>'
-    ).join('')+'</div>'+
+    ).join('')+'</div>') +
     '<div class="pr-row"><label>หมายเหตุ</label><input data-k="note" value="'+esc(it.note)+'"></div>'+
     '<div class="pr-btns">'+
       '<button data-act="rot">หมุน 45°</button>'+
@@ -1465,6 +1509,20 @@ function renderBulkPanel(){
     '</div>';
 }
 function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+function ageBadgeHtml(it){
+  const age = plugAge(it.installDate);
+  if(!age) return '';
+  return '<div class="age-badge '+age.level+'"><span class="dot"></span>ใช้งานมาแล้ว '+age.label+' — '+AGE_LEVEL_LABEL[age.level]+'</div>';
+}
+function powerstripFieldsHtml(it){
+  const outlets = state.items.filter(o=>o.type==='outlet' && o.floor===it.floor);
+  return '<div class="pr-row"><label>เชื่อมกับจุดปลั๊ก</label><select data-k="linkOutletId">'+
+      '<option value="">— ไม่ระบุ —</option>'+
+      outlets.map(o=>'<option value="'+o.id+'"'+(String(it.linkOutletId)===String(o.id)?' selected':'')+'>'+esc(o.name)+(o.note?' ('+esc(o.note)+')':'')+'</option>').join('')+
+    '</select></div>'+
+    '<div class="pr-row"><label>วันที่ติดตั้ง</label><input data-k="installDate" type="date" value="'+esc(it.installDate)+'"></div>'+
+    ageBadgeHtml(it);
+}
 
 /* ---------- UI: device list drawer ---------- */
 const listDrawerEl = document.getElementById('listDrawer');
@@ -1484,6 +1542,10 @@ function listRowHtml(it){
   const chips = [];
   if(it.lan && (it.lanNo||'').trim()) chips.push('<span class="lr-chip lan">'+esc(it.lanNo)+'</span>');
   if(it.tel && telDisp) chips.push('<span class="lr-chip tel">'+esc(telDisp)+'</span>');
+  if(it.type==='powerstrip'){
+    const age = plugAge(it.installDate);
+    if(age) chips.push('<span class="lr-chip age-'+age.level+'">'+esc(age.label)+'</span>');
+  }
   const active = (ui.selected===it.id || ui.selectedMulti.has(it.id)) ? ' active' : '';
   return '<div class="list-row'+active+'" data-id="'+it.id+'">'+
     '<div class="lr-main"><div class="lr-name">'+esc(it.name)+'</div><div class="lr-type">'+TYPE_LABEL[it.type]+'</div></div>'+
@@ -1536,8 +1598,13 @@ propsEl.addEventListener('input', e=>{
   if(SVC.includes(k)) v = Math.max(0, Math.min(6, +v||0));
   if(k==='floor') v = +v;
   it[k] = v;
+  if(k==='floor' && it.type==='powerstrip' && it.linkOutletId){
+    const linked = state.items.find(o=>o.id===+it.linkOutletId);
+    if(!linked || linked.floor!==it.floor) it.linkOutletId = '';
+  }
   save();
   if(k==='floor'){ rebuildScene(); renderPanel(); }
+  else if(k==='installDate'){ renderPanel(); renderList(); }
   else if(['name','ext','lanNo','telNo'].includes(k)){
     const g = itemGroups.get(it.id);
     if(g){
@@ -1632,6 +1699,52 @@ document.getElementById('exportSql').onclick = ()=>{
     FLOORS.map(f=>'INSERT INTO floors (id, name) VALUES ('+f.id+', '+q(f.name)+');').join('\n') + '\n\n' +
     state.items.map(i=>'INSERT INTO items VALUES ('+[i.id,i.floor,q(i.type),q(i.name),i.x,i.z,i.rot,i.lan||0,i.tel||0,i.power||0,i.fax||0,q(i.ext),q(i.lanNo),q(i.telNo),q(i.note),i.labelOn===false?0:1,i.locked?1:0,i.len!=null?i.len:'NULL'].join(', ')+');').join('\n') + '\n';
   download('osth-office-layout.sql', sql, 'text/plain');
+};
+// ประเภทไอเทมที่ใช้แทน "คน" ในผังจริง — ปัจจุบัน Pong ติดชื่อ+เลขสาย/เบอร์ไว้บนไอเทม monitor เป็นหลัก
+// (ไม่ใช่ workstation ตามข้อมูลตั้งต้น) เลยรวมทุกประเภทที่อาจเป็นจุดของคนไว้ แล้วกรองด้วยชื่อจริงอีกชั้น
+const PERSON_TYPES = ['workstation','workstationL','desk','deskL','monitor','pc'];
+// ปลั๊กพ่วงไม่ได้ผูก id กับคนโดยตรง (ผูกกับจุดปลั๊กเท่านั้น) — เวลา export เลยจับคู่ตามตำแหน่งจริงบนผัง:
+// แต่ละปลั๊กพ่วง "เลือก" คนที่อยู่ใกล้ที่สุด (ไม่ใช่คนแต่ละคนเลือกปลั๊กพ่วงที่ใกล้ที่สุด) กันปลั๊กพ่วงตัวเดียว
+// โผล่ซ้ำในหลายแถวถ้ามีคนหลายคนอยู่ใกล้เท่าๆ กัน · ระยะห่างสูงสุด (ม.) ที่ยังนับว่า "อยู่ที่โต๊ะนี้"
+const POWERSTRIP_MATCH_DIST = 1.2;
+function assignPowerstripNotes(people, powerstrips){
+  const noteByPersonId = new Map();
+  powerstrips.forEach(ps=>{
+    let best=null, bestD=Infinity;
+    people.forEach(p=>{
+      if(p.floor!==ps.floor) return;
+      const dx=p.x-ps.x, dz=p.z-ps.z, dd=dx*dx+dz*dz;
+      if(dd<bestD){ bestD=dd; best=p; }
+    });
+    if(best && bestD<=POWERSTRIP_MATCH_DIST*POWERSTRIP_MATCH_DIST) noteByPersonId.set(best.id, (ps.note||'').trim());
+  });
+  return noteByPersonId;
+}
+function buildLanPhoneRows(){
+  const people = state.items.filter(i=>PERSON_TYPES.includes(i.type) && (i.name||'').trim());
+  const powerstrips = state.items.filter(i=>i.type==='powerstrip');
+  const noteByPersonId = assignPowerstripNotes(people, powerstrips);
+  const rows = people.map(it=>{
+    const floor = FLOORS.find(f=>f.id===it.floor);
+    const bld = buildingOfItem(it);
+    const floorLabel = floor ? floor.name + (bld ? ' / ' + bld : '') : '';
+    const phone = (it.telNo||'').trim() || (it.ext||'').trim();
+    return [it.name, floorLabel, (it.lanNo||'').trim(), phone, noteByPersonId.get(it.id) || ''];
+  });
+  rows.sort((a,b)=> a[1].localeCompare(b[1],'th') || a[0].localeCompare(b[0],'th'));
+  return rows;
+}
+document.getElementById('exportXlsx').onclick = ()=>{
+  if(typeof XLSX==='undefined'){ toast('โหลดไลบรารี Excel ไม่สำเร็จ ลองรีเฟรชหน้าแล้วลองใหม่'); return; }
+  const rows = buildLanPhoneRows();
+  const aoa = [['ชื่อ','ชั้น / ตึก','เลขสาย LAN','เบอร์โทร','ปลั๊กพ่วง'], ...rows];
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [{wch:18},{wch:14},{wch:12},{wch:12},{wch:20}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'LAN-เบอร์โทร');
+  const d = new Date();
+  const stamp = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  XLSX.writeFile(wb, 'OSTH_LAN_เบอร์โทร_'+stamp+'.xlsx');
 };
 document.getElementById('reset').onclick = ()=>{
   if(!confirm('ล้างผังปัจจุบันและกลับไปใช้ข้อมูลจากไฟล์ Excel?')) return;
