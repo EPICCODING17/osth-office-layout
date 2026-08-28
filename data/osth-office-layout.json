@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-28T02:44:34.154Z",
+  "exportedAt": "2026-08-28T02:45:43.065Z",
   "floors": [
     {
       "id": 1,
@@ -3742,8 +3742,29 @@
       "type": "powerstrip",
       "name": "ปลั๊กพ่วง",
       "floor": 1,
+      "x": -7.62,
+      "z": 1.76,
+      "rot": 0,
+      "labelOn": true,
+      "locked": true,
+      "lan": 0,
+      "tel": 0,
+      "power": 0,
+      "fax": 0,
+      "ext": "",
+      "note": "Haco",
+      "lanNo": "",
+      "telNo": "",
+      "linkOutletId": "",
+      "installDate": "2026-09-01"
+    },
+    {
+      "id": 249,
+      "type": "powerstrip",
+      "name": "ปลั๊กพ่วง",
+      "floor": 1,
       "x": -7.6,
-      "z": 1.7,
+      "z": 2.08,
       "rot": 0,
       "labelOn": true,
       "locked": false,
