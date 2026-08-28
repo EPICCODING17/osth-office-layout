@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-28T01:57:03.172Z",
+  "exportedAt": "2026-08-28T01:58:42.341Z",
   "floors": [
     {
       "id": 1,
@@ -3740,23 +3740,23 @@
     {
       "id": 248,
       "type": "powerstrip",
-      "name": "ปลั๊กพ่วง 1",
+      "name": "ปลั๊กพ่วง",
       "floor": 1,
       "x": -6.89,
       "z": -0.1,
       "rot": 0,
-      "labelOn": false,
+      "labelOn": true,
       "locked": false,
       "lan": 0,
       "tel": 0,
       "power": 0,
       "fax": 0,
       "ext": "",
-      "note": "",
+      "note": "้Haco",
       "lanNo": "",
       "telNo": "",
       "linkOutletId": "",
-      "installDate": ""
+      "installDate": "2026-09-01"
     }
   ]
 }
