@@ -6,7 +6,8 @@
 <title>OSTH — ผังเดินสาย LAN / TEL / POWER / FAX (3D)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"></script>
+<!-- ExcelJS แทน SheetJS/xlsx เดิม — ต้องใช้ตัวนี้เพราะ export ต้องแทรกรูปผัง 3D เข้าไปในไฟล์ด้วย (SheetJS community edition เขียนรูปภาพลง .xlsx ไม่ได้ เป็นฟีเจอร์ Pro เท่านั้น) -->
+<script src="https://unpkg.com/exceljs@4.4.0/dist/exceljs.min.js" integrity="sha384-Pqp51FUN2/qzfxZxBCtF0stpc9ONI6MYZpVqmo8m20SoaQCzf+arZvACkLkirlPz" crossorigin="anonymous"></script>
 <script type="importmap">
 {
   "imports": {
@@ -346,6 +347,16 @@ const TYPE_LABEL = {
   workstation:'โต๊ะทำงาน + คอม', workstationL:'โต๊ะตัว L + คอม', desk:'โต๊ะเปล่า', deskL:'โต๊ะตัว L (เปล่า)', meeting:'โต๊ะประชุม', chair:'เก้าอี้',
   cabinet:'ตู้เอกสาร', monitor:'จอมอนิเตอร์', pc:'เครื่องคอม', printer:'ปริ้นเตอร์/Copier',
   rack:'ตู้ Rack (MDF)', panel:'ตู้ไฟ', wifi:'WiFi AP', outlet:'จุดปลั๊ก/เต้ารับ', powerstrip:'ปลั๊กพ่วง', wall:'ผนังกั้น', door:'ประตู'
+};
+// แคตตาล็อกรุ่นรางปลั๊กไฟที่ Pong ใช้จริง (2026-09-02) — แต่ละปลั๊กพ่วงเลือกได้ว่าเป็นรุ่นไหนผ่าน productKey
+// ใช้เติมคอลัมน์สเปคละเอียดตอน export แทนที่จะพิมพ์ซ้ำสเปคยาวๆ ในทุกไอเทม
+const POWERSTRIP_CATALOG = {
+  eleckta_3s3sw: {label:'ELECKTA 3 ช่อง 3 สวิตช์ 2 USB-A 1 USB-C', brand:'ELECKTA', model:'', channels:3, switches:3, usbA:2, usbC:1, amp:null, lengthM:1, color:'ขาว'},
+  haco_s2ebusb: {label:'HACO EPN-S2EBUSB', brand:'HACO', model:'EPN-S2EBUSB', channels:2, switches:1, usbA:1, usbC:1, amp:16, lengthM:3, color:''},
+  haco_2s2eb2: {label:'HACO EPN-2S2EB/2', brand:'HACO', model:'EPN-2S2EB/2', channels:2, switches:2, usbA:0, usbC:0, amp:16, lengthM:3, color:''},
+  haco_ej3s3ebusb3: {label:'HACO EJ-3S3EBUSB/3', brand:'HACO', model:'EJ-3S3EBUSB/3', channels:3, switches:3, usbA:2, usbC:0, amp:null, lengthM:3, color:'ขาว'},
+  haco_s4ebusbac3: {label:'HACO EPN-S4EBUSBAC/3', brand:'HACO', model:'EPN-S4EBUSBAC/3', channels:4, switches:1, usbA:1, usbC:1, amp:16, lengthM:3, color:''},
+  haco_s5eb5: {label:'HACO EPN-S5EB/5', brand:'HACO', model:'EPN-S5EB/5', channels:5, switches:1, usbA:0, usbC:0, amp:16, lengthM:5, color:'เทา'}
 };
 // เกณฑ์อายุการใช้งานปลั๊กพ่วง (เดือน) สำหรับ badge เตือน — ok < 24, warn 24-35, bad >= 36 (เกิน 3 ปี)
 const PLUG_AGE_WARN_MONTHS = 24, PLUG_AGE_BAD_MONTHS = 36;
@@ -1520,6 +1531,10 @@ function powerstripFieldsHtml(it){
       '<option value="">— ไม่ระบุ —</option>'+
       outlets.map(o=>'<option value="'+o.id+'"'+(String(it.linkOutletId)===String(o.id)?' selected':'')+'>'+esc(o.name)+(o.note?' ('+esc(o.note)+')':'')+'</option>').join('')+
     '</select></div>'+
+    '<div class="pr-row"><label>รุ่นราง</label><select data-k="productKey">'+
+      '<option value="">— ไม่ระบุ —</option>'+
+      Object.keys(POWERSTRIP_CATALOG).map(k=>'<option value="'+k+'"'+(it.productKey===k?' selected':'')+'>'+esc(POWERSTRIP_CATALOG[k].label)+'</option>').join('')+
+    '</select></div>'+
     '<div class="pr-row"><label>วันที่ติดตั้ง</label><input data-k="installDate" type="date" value="'+esc(it.installDate)+'"></div>'+
     ageBadgeHtml(it);
 }
@@ -1702,7 +1717,7 @@ document.getElementById('exportSql').onclick = ()=>{
 };
 // ประเภทไอเทมที่ใช้แทน "คน" ในผังจริง — ปัจจุบัน Pong ติดชื่อ+เลขสาย/เบอร์ไว้บนไอเทม monitor เป็นหลัก
 // (ไม่ใช่ workstation ตามข้อมูลตั้งต้น) เลยรวมทุกประเภทที่อาจเป็นจุดของคนไว้ แล้วกรองด้วยชื่อจริงอีกชั้น
-const PERSON_TYPES = ['workstation','workstationL','desk','deskL','monitor','pc'];
+const PERSON_TYPES = ['workstation','workstationL','desk','deskL','monitor','pc','meeting'];
 // ปลั๊กพ่วงไม่ได้ผูก id กับคนโดยตรง (ผูกกับจุดปลั๊กเท่านั้น) — เวลา export เลยจับคู่ตามตำแหน่งจริงบนผัง:
 // แต่ละปลั๊กพ่วง "เลือก" คนที่อยู่ใกล้ที่สุด (ไม่ใช่คนแต่ละคนเลือกปลั๊กพ่วงที่ใกล้ที่สุด) กันปลั๊กพ่วงตัวเดียว
 // โผล่ซ้ำในหลายแถวถ้ามีคนหลายคนอยู่ใกล้เท่าๆ กัน · ระยะห่างสูงสุด (ม.) ที่ยังนับว่า "อยู่ที่โต๊ะนี้"
@@ -1716,22 +1731,53 @@ function powerstripLabel(ps){
   if(name && name!==TYPE_LABEL.powerstrip) return name.replace(new RegExp('^'+TYPE_LABEL.powerstrip+'\\s*'), '').trim();
   return '';
 }
+function nearestPersonFor(ps, people){
+  let best=null, bestD=Infinity;
+  people.forEach(p=>{
+    if(p.floor!==ps.floor) return;
+    const dx=p.x-ps.x, dz=p.z-ps.z, dd=dx*dx+dz*dz;
+    if(dd<bestD){ bestD=dd; best=p; }
+  });
+  if(!best || bestD>POWERSTRIP_MATCH_DIST*POWERSTRIP_MATCH_DIST) return null;
+  return best;
+}
 function assignPowerstripNotes(people, powerstrips){
   const noteByPersonId = new Map();
   powerstrips.forEach(ps=>{
-    let best=null, bestD=Infinity;
-    people.forEach(p=>{
-      if(p.floor!==ps.floor) return;
-      const dx=p.x-ps.x, dz=p.z-ps.z, dd=dx*dx+dz*dz;
-      if(dd<bestD){ bestD=dd; best=p; }
-    });
-    if(!best || bestD>POWERSTRIP_MATCH_DIST*POWERSTRIP_MATCH_DIST) return;
+    const best = nearestPersonFor(ps, people);
+    if(!best) return;
     const label = powerstripLabel(ps);
     if(!label) return; // ปลั๊กพ่วงที่ไม่มีป้ายอะไรเลย ไม่ควรไปเขียนทับป้ายของตัวอื่นที่ใกล้คนเดียวกัน
     const cur = noteByPersonId.get(best.id);
     noteByPersonId.set(best.id, cur ? cur+', '+label : label);
   });
   return noteByPersonId;
+}
+// เลข P ล้วนๆ จากชื่อ (ไม่ fallback ไปหมายเหตุเหมือน powerstripLabel — คอลัมน์ "เลข P" ในทะเบียนอยากได้เลขจริงเท่านั้น)
+function powerstripPNumber(ps){
+  const m = /P(\d+)/i.exec(ps.name||'');
+  return m ? 'P'+m[1] : '';
+}
+function buildPowerstripRows(){
+  const people = state.items.filter(i=>PERSON_TYPES.includes(i.type) && (i.name||'').trim());
+  const powerstrips = state.items.filter(i=>i.type==='powerstrip');
+  const rows = powerstrips.map(ps=>{
+    const user = nearestPersonFor(ps, people);
+    const floor = FLOORS.find(f=>f.id===ps.floor);
+    const bld = buildingOfItem(ps);
+    const floorLabel = floor ? floor.name + (bld ? ' / ' + bld : '') : '';
+    const cat = ps.productKey ? POWERSTRIP_CATALOG[ps.productKey] : null;
+    const brandModel = cat ? (cat.brand + (cat.model ? ' ' + cat.model : '')) : (ps.note||'').trim();
+    const age = plugAge(ps.installDate);
+    return [
+      powerstripPNumber(ps), user ? user.name : '', floorLabel, brandModel,
+      cat ? cat.channels : '', cat ? cat.switches : '', cat && cat.usbA ? cat.usbA : '', cat && cat.usbC ? cat.usbC : '',
+      cat && cat.amp ? cat.amp : '', cat ? cat.lengthM : '', cat ? cat.color : '',
+      (ps.installDate||''), age ? age.label : ''
+    ];
+  });
+  rows.sort((a,b)=> a[2].localeCompare(b[2],'th') || (a[0]||'zzz').localeCompare(b[0]||'zzz','th',{numeric:true}));
+  return rows;
 }
 function buildLanPhoneRows(){
   const people = state.items.filter(i=>PERSON_TYPES.includes(i.type) && (i.name||'').trim());
@@ -1747,17 +1793,91 @@ function buildLanPhoneRows(){
   rows.sort((a,b)=> a[1].localeCompare(b[1],'th') || a[0].localeCompare(b[0],'th'));
   return rows;
 }
-document.getElementById('exportXlsx').onclick = ()=>{
-  if(typeof XLSX==='undefined'){ toast('โหลดไลบรารี Excel ไม่สำเร็จ ลองรีเฟรชหน้าแล้วลองใหม่'); return; }
-  const rows = buildLanPhoneRows();
-  const aoa = [['ชื่อ','ชั้น / ตึก','เลขสาย LAN','เบอร์โทร','ปลั๊กพ่วง'], ...rows];
-  const ws = XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols'] = [{wch:18},{wch:14},{wch:12},{wch:12},{wch:20}];
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'LAN-เบอร์โทร');
+// ถ่ายภาพผัง 3D ของแต่ละชั้น เปิดครบทุกสาย+ป้ายชื่อ
+// เรนเดอร์ลง renderer แยกต่างหาก (ไม่ใช่ renderer บนจอ) ที่ความละเอียดคงที่ แล้ว "ซูมพอดี" กับขนาดจริงของชั้นนั้นๆ
+// เสมอ — ตั้งใจไม่ใช้กล้อง/renderer บนจอตรงๆ เพราะภาพที่ถ่ายได้จะขึ้นกับสัดส่วนหน้าต่าง/แผงคุณสมบัติที่เปิดอยู่ตอนนั้น
+// (เจอจริง: หน้าต่างแคบ/สูง ทำให้รูปที่ถ่ายมามีพื้นที่ว่างเยอะ ตัวผังถูกบีบลงมุมล่าง) วิธีนี้ได้ภาพเต็มเฟรมสม่ำเสมอทุกครั้ง
+// แล้วคืนสถานะเดิม (ชั้น/มุมกล้อง/toggle) ให้ Pong กลับมาเจอหน้าจอเหมือนก่อนกด export ทุกครั้ง
+async function captureFloorImages(){
+  const prevMode = ui.mode, prevFloor = ui.floor;
+  const prevShow = Object.assign({}, ui.show);
+  const prevCamPos = camera.position.clone();
+  const prevCamAspect = camera.aspect;
+  const prevTarget = controls.target.clone();
+  stopPlacing(); ui.selectedMulti.clear();
+
+  const EXPORT_W = 2600, EXPORT_H = 1625; // ความละเอียดสูงกว่าจอปกติมาก — กันภาพแตก/เบลอตอน Pong ซูมดูใน Excel
+  const offscreen = new THREE.WebGLRenderer({ antialias:true, preserveDrawingBuffer:true });
+  offscreen.setPixelRatio(1.5); // เรนเดอร์แบบ supersample เพิ่มอีกชั้น ช่วยลดรอยหยักขอบวัตถุ/ตัวอักษรป้ายชื่อ
+  offscreen.setSize(EXPORT_W, EXPORT_H);
+  offscreen.shadowMap.enabled = true;
+  offscreen.shadowMap.type = THREE.PCFShadowMap;
+  camera.aspect = EXPORT_W / EXPORT_H;
+  const isoDir = new THREE.Vector3(9.5,10.4,11.5).normalize(); // ทิศเดียวกับมุมกล้อง iso ปกติของแอป แค่ปรับระยะให้พอดีกรอบ
+
+  const images = [];
+  try{
+    ui.show.lan = ui.show.tel = ui.show.power = ui.show.fax = ui.show.labels = true;
+    for(const f of FLOORS){
+      ui.mode = 'floor'; ui.floor = f.id;
+      rebuildScene();
+      // ตั้งใจใช้ setTimeout ไม่ใช่ requestAnimationFrame — rAF โดนเบราว์เซอร์แช่แข็ง/หน่วงหนักถ้าแท็บไม่ได้โฟกัสอยู่ตรงหน้า
+      // (เช่น Pong สลับไปแท็บอื่นระหว่างรอ export) ทำให้ค้างได้ไม่จบ ส่วน setTimeout ยังทำงานต่อแม้แท็บไม่ได้โฟกัส
+      await new Promise(r=>setTimeout(r, 60));
+      const box = new THREE.Box3().setFromObject(buildingGroup);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z, 1);
+      const fitDist = (maxDim/2) / Math.tan((camera.fov*Math.PI/180)/2) * 1.35; // 1.35 = กันขอบ ไม่ให้ผังชิดขอบภาพเกินไป
+      camera.position.copy(center).addScaledVector(isoDir, fitDist);
+      camera.up.set(0,1,0);
+      camera.lookAt(center);
+      camera.updateProjectionMatrix();
+      offscreen.render(scene, camera);
+      images.push({ name: f.name, dataUrl: offscreen.domElement.toDataURL('image/png'), w: offscreen.domElement.width, h: offscreen.domElement.height });
+    }
+  } finally {
+    offscreen.dispose();
+    ui.mode = prevMode; ui.floor = prevFloor;
+    Object.assign(ui.show, prevShow);
+    document.querySelectorAll('#toggles .tgl').forEach(t=>{ if(t.dataset.t) t.classList.toggle('on', ui.show[t.dataset.t]); });
+    renderTabs();
+    camera.aspect = prevCamAspect;
+    camera.position.copy(prevCamPos);
+    controls.target.copy(prevTarget);
+    controls.update();
+    camera.updateProjectionMatrix();
+    rebuildScene();
+  }
+  return images;
+}
+document.getElementById('exportXlsx').onclick = async ()=>{
+  if(typeof ExcelJS==='undefined'){ toast('โหลดไลบรารี Excel ไม่สำเร็จ ลองรีเฟรชหน้าแล้วลองใหม่'); return; }
+  toast('กำลังสร้างไฟล์ Excel...');
+  const wb = new ExcelJS.Workbook();
+
+  const ws = wb.addWorksheet('LAN-เบอร์โทร');
+  ws.columns = [{width:18},{width:14},{width:12},{width:12},{width:20}];
+  ws.addRow(['ชื่อ','ชั้น / ตึก','เลขสาย LAN','เบอร์โทร','ปลั๊กพ่วง']).font = {bold:true};
+  buildLanPhoneRows().forEach(r=>ws.addRow(r));
+
+  const psWs = wb.addWorksheet('ทะเบียนรางปลั๊ก');
+  psWs.columns = [{width:8},{width:14},{width:14},{width:24},{width:9},{width:8},{width:7},{width:7},{width:9},{width:11},{width:8},{width:12},{width:14}];
+  psWs.addRow(['เลข P','ผู้ใช้','ชั้น / ตึก','ยี่ห้อ / รุ่น','จำนวนช่อง','สวิตช์','USB-A','USB-C','กระแส (A)','ความยาว (ม.)','สี','วันที่ติดตั้ง','อายุใช้งาน']).font = {bold:true};
+  buildPowerstripRows().forEach(r=>psWs.addRow(r));
+
+  const floorImages = await captureFloorImages();
+  floorImages.forEach(img=>{
+    const imgWs = wb.addWorksheet('ผัง ' + img.name);
+    const scale = Math.min(1, 900 / img.w);
+    const imgId = wb.addImage({ base64: img.dataUrl, extension: 'png' });
+    imgWs.addImage(imgId, { tl:{col:0,row:0}, ext:{ width: img.w*scale, height: img.h*scale } });
+  });
+
+  const buf = await wb.xlsx.writeBuffer();
   const d = new Date();
   const stamp = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  XLSX.writeFile(wb, 'OSTH_LAN_เบอร์โทร_'+stamp+'.xlsx');
+  download('OSTH_LAN_เบอร์โทร_'+stamp+'.xlsx', buf, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 };
 document.getElementById('reset').onclick = ()=>{
   if(!confirm('ล้างผังปัจจุบันและกลับไปใช้ข้อมูลจากไฟล์ Excel?')) return;
