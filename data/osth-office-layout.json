@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-09-02T06:00:31.565Z",
+  "exportedAt": "2026-09-02T09:32:18.347Z",
   "floors": [
     {
       "id": 1,
@@ -2725,7 +2725,7 @@
     {
       "id": 194,
       "type": "meeting",
-      "name": "Meeting 1",
+      "name": "",
       "floor": 2,
       "x": -6.85,
       "z": -2.48,
@@ -3798,8 +3798,7 @@
       "lanNo": "",
       "telNo": "",
       "linkOutletId": "",
-      "installDate": "2026-09-01",
-      "productKey": "haco_s4ebusbac3"
+      "installDate": "2026-09-01"
     },
     {
       "id": 251,
@@ -3820,8 +3819,7 @@
       "lanNo": "",
       "telNo": "",
       "linkOutletId": "",
-      "installDate": "2026-09-01",
-      "productKey": "haco_s4ebusbac3"
+      "installDate": "2026-09-01"
     },
     {
       "id": 252,
@@ -3842,8 +3840,7 @@
       "lanNo": "",
       "telNo": "",
       "linkOutletId": "",
-      "installDate": "2026-09-01",
-      "productKey": "haco_ej3s3ebusb3"
+      "installDate": "2026-09-01"
     },
     {
       "id": 253,
@@ -3864,8 +3861,7 @@
       "lanNo": "",
       "telNo": "",
       "linkOutletId": "",
-      "installDate": "2026-09-01",
-      "productKey": "haco_s4ebusbac3"
+      "installDate": "2026-09-01"
     },
     {
       "id": 254,
@@ -3886,8 +3882,7 @@
       "lanNo": "",
       "telNo": "",
       "linkOutletId": "",
-      "installDate": "2026-09-01",
-      "productKey": "haco_s2ebusb"
+      "installDate": "2026-09-01"
     },
     {
       "id": 255,
@@ -3908,8 +3903,7 @@
       "lanNo": "",
       "telNo": "",
       "linkOutletId": "",
-      "installDate": "2026-09-01",
-      "productKey": "haco_s2ebusb"
+      "installDate": "2026-09-01"
     },
     {
       "id": 256,
@@ -3972,8 +3966,7 @@
       "lanNo": "",
       "telNo": "",
       "linkOutletId": "",
-      "installDate": "2026-09-01",
-      "productKey": "haco_2s2eb2"
+      "installDate": "2026-09-01"
     },
     {
       "id": 259,
@@ -3994,8 +3987,7 @@
       "lanNo": "",
       "telNo": "",
       "linkOutletId": "",
-      "installDate": "2026-09-01",
-      "productKey": "haco_s2ebusb"
+      "installDate": "2026-09-01"
     },
     {
       "id": 260,
@@ -4016,8 +4008,7 @@
       "lanNo": "",
       "telNo": "",
       "linkOutletId": "",
-      "installDate": "2026-09-01",
-      "productKey": "haco_s2ebusb"
+      "installDate": "2026-09-01"
     },
     {
       "id": 261,
@@ -4038,8 +4029,7 @@
       "lanNo": "",
       "telNo": "",
       "linkOutletId": "",
-      "installDate": "2026-09-01",
-      "productKey": "haco_ej3s3ebusb3"
+      "installDate": "2026-09-01"
     },
     {
       "id": 262,
@@ -4060,8 +4050,7 @@
       "lanNo": "",
       "telNo": "",
       "linkOutletId": "",
-      "installDate": "2026-09-01",
-      "productKey": "haco_ej3s3ebusb3"
+      "installDate": "2026-09-01"
     },
     {
       "id": 263,
@@ -4082,8 +4071,7 @@
       "lanNo": "",
       "telNo": "",
       "linkOutletId": "",
-      "installDate": "2026-09-01",
-      "productKey": "haco_ej3s3ebusb3"
+      "installDate": "2026-09-01"
     },
     {
       "id": 264,
@@ -4104,8 +4092,7 @@
       "lanNo": "",
       "telNo": "",
       "linkOutletId": "",
-      "installDate": "2026-09-01",
-      "productKey": "haco_s4ebusbac3"
+      "installDate": "2026-09-01"
     },
     {
       "id": 265,
@@ -4126,8 +4113,7 @@
       "lanNo": "",
       "telNo": "",
       "linkOutletId": "",
-      "installDate": "2026-09-01",
-      "productKey": "haco_s2ebusb"
+      "installDate": "2026-09-01"
     },
     {
       "id": 266,
@@ -4148,8 +4134,7 @@
       "lanNo": "",
       "telNo": "",
       "linkOutletId": "",
-      "installDate": "2026-09-01",
-      "productKey": "haco_ej3s3ebusb3"
+      "installDate": "2026-09-01"
     },
     {
       "id": 267,
@@ -4170,8 +4155,7 @@
       "lanNo": "",
       "telNo": "",
       "linkOutletId": "",
-      "installDate": "2026-09-01",
-      "productKey": "haco_ej3s3ebusb3"
+      "installDate": "2026-09-01"
     },
     {
       "id": 268,
@@ -4192,13 +4176,12 @@
       "lanNo": "",
       "telNo": "",
       "linkOutletId": "",
-      "installDate": "2026-09-01",
-      "productKey": "haco_s2ebusb"
+      "installDate": "2026-09-01"
     },
     {
       "id": 269,
       "type": "powerstrip",
-      "name": "ปลั๊กพ่วง P30",
+      "name": "ปลั๊กพ่วง P17",
       "floor": 1,
       "x": -3.88,
       "z": 1.32,
@@ -4214,8 +4197,7 @@
       "lanNo": "",
       "telNo": "",
       "linkOutletId": "",
-      "installDate": "2026-09-01",
-      "productKey": "haco_s2ebusb"
+      "installDate": "2026-09-01"
     },
     {
       "id": 270,
@@ -4236,8 +4218,7 @@
       "lanNo": "",
       "telNo": "",
       "linkOutletId": "",
-      "installDate": "2026-09-01",
-      "productKey": "haco_s5eb5"
+      "installDate": "2026-09-01"
     },
     {
       "id": 271,
@@ -4258,8 +4239,7 @@
       "lanNo": "",
       "telNo": "",
       "linkOutletId": "",
-      "installDate": "2026-09-01",
-      "productKey": "haco_ej3s3ebusb3"
+      "installDate": "2026-09-01"
     },
     {
       "id": 272,
@@ -4323,128 +4303,6 @@
       "telNo": "",
       "linkOutletId": "",
       "installDate": ""
-    },
-    {
-      "id": 275,
-      "rot": 0,
-      "lan": 0,
-      "tel": 0,
-      "power": 1,
-      "fax": 0,
-      "ext": "",
-      "lanNo": "",
-      "telNo": "",
-      "note": "",
-      "labelOn": true,
-      "locked": false,
-      "type": "monitor",
-      "name": "Service",
-      "floor": 1,
-      "x": 6.51,
-      "z": -4.75
-    },
-    {
-      "id": 276,
-      "rot": 0,
-      "lan": 0,
-      "tel": 0,
-      "power": 1,
-      "fax": 0,
-      "ext": "",
-      "lanNo": "",
-      "telNo": "",
-      "note": "",
-      "labelOn": true,
-      "locked": false,
-      "type": "powerstrip",
-      "name": "ปลั๊กพ่วง",
-      "floor": 1,
-      "x": 6.51,
-      "z": -4.75,
-      "installDate": "2026-09-01",
-      "productKey": "haco_s5eb5"
-    },
-    {
-      "id": 278,
-      "rot": 0,
-      "lan": 0,
-      "tel": 0,
-      "power": 1,
-      "fax": 0,
-      "ext": "",
-      "lanNo": "",
-      "telNo": "",
-      "note": "",
-      "labelOn": true,
-      "locked": false,
-      "type": "powerstrip",
-      "name": "ปลั๊กพ่วง P31",
-      "floor": 2,
-      "x": -6.85,
-      "z": -2.48,
-      "installDate": "2026-09-01",
-      "productKey": "haco_ej3s3ebusb3"
-    },
-    {
-      "id": 279,
-      "rot": 0,
-      "lan": 0,
-      "tel": 0,
-      "power": 1,
-      "fax": 0,
-      "ext": "",
-      "lanNo": "",
-      "telNo": "",
-      "note": "",
-      "labelOn": true,
-      "locked": false,
-      "type": "meeting",
-      "name": "Meeting 2",
-      "floor": 2,
-      "x": 7.4,
-      "z": 4.3
-    },
-    {
-      "id": 280,
-      "rot": 0,
-      "lan": 0,
-      "tel": 0,
-      "power": 1,
-      "fax": 0,
-      "ext": "",
-      "lanNo": "",
-      "telNo": "",
-      "note": "",
-      "labelOn": true,
-      "locked": false,
-      "type": "powerstrip",
-      "name": "ปลั๊กพ่วง P32",
-      "floor": 2,
-      "x": 7.4,
-      "z": 4.3,
-      "installDate": "2026-09-01",
-      "productKey": "haco_ej3s3ebusb3"
-    },
-    {
-      "id": 281,
-      "rot": 0,
-      "lan": 0,
-      "tel": 0,
-      "power": 1,
-      "fax": 0,
-      "ext": "",
-      "lanNo": "",
-      "telNo": "",
-      "note": "",
-      "labelOn": true,
-      "locked": false,
-      "type": "powerstrip",
-      "name": "ปลั๊กพ่วง P33",
-      "floor": 2,
-      "x": -3.48,
-      "z": -4.07,
-      "installDate": "2026-09-01",
-      "productKey": "eleckta_3s3sw"
     }
   ]
 }
