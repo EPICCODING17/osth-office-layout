@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-09-02T05:52:04.095Z",
+  "exportedAt": "2026-09-02T06:00:31.565Z",
   "floors": [
     {
       "id": 1,
@@ -51,7 +51,7 @@
       "fax": 0,
       "ext": "",
       "note": "ห้องครัว",
-      "lanNo": "1F-22",
+      "lanNo": "",
       "telNo": "",
       "labelOn": true,
       "linkOutletId": "",
