@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-31T09:44:32.782Z",
+  "exportedAt": "2026-09-02T04:47:47.546Z",
   "floors": [
     {
       "id": 1,
@@ -40,7 +40,7 @@
     {
       "id": 22,
       "type": "wifi",
-      "name": "Wifi New 1",
+      "name": "WiFi AP 5",
       "floor": 1,
       "x": 6.51,
       "z": -4.75,
@@ -60,7 +60,7 @@
     {
       "id": 23,
       "type": "wifi",
-      "name": "Wifi New 2",
+      "name": "WiFi AP 2",
       "floor": 1,
       "x": -5.47,
       "z": -4.84,
@@ -394,7 +394,7 @@
     {
       "id": 57,
       "type": "wifi",
-      "name": "WiFi AP 3",
+      "name": "WiFi AP 1",
       "floor": 1,
       "x": -1.49,
       "z": 2.5,
@@ -4181,7 +4181,7 @@
     {
       "id": 269,
       "type": "powerstrip",
-      "name": "ปลั๊กพ่วง P30",
+      "name": "ปลั๊กพ่วง P17",
       "floor": 1,
       "x": -3.88,
       "z": 1.32,
@@ -4240,6 +4240,27 @@
       "telNo": "",
       "linkOutletId": "",
       "installDate": "2026-09-01"
+    },
+    {
+      "id": 272,
+      "type": "wifi",
+      "name": "WiFi AP 4",
+      "floor": 1,
+      "x": 3.51,
+      "z": 1.99,
+      "rot": 0,
+      "labelOn": true,
+      "locked": false,
+      "lan": 1,
+      "tel": 0,
+      "power": 0,
+      "fax": 0,
+      "ext": "",
+      "note": "",
+      "lanNo": "",
+      "telNo": "",
+      "linkOutletId": "",
+      "installDate": ""
     }
   ]
 }
