@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-09-02T09:37:20.995Z",
+  "exportedAt": "2026-09-02T09:41:34.827Z",
   "floors": [
     {
       "id": 1,
@@ -4299,7 +4299,9 @@
       "name": "Service",
       "floor": 1,
       "x": 6.51,
-      "z": -4.75
+      "z": -4.75,
+      "linkOutletId": "",
+      "installDate": ""
     },
     {
       "id": 276,
@@ -4320,7 +4322,8 @@
       "x": 6.51,
       "z": -4.75,
       "installDate": "2026-09-01",
-      "productKey": "haco_s5eb5"
+      "productKey": "haco_s5eb5",
+      "linkOutletId": ""
     },
     {
       "id": 278,
@@ -4341,7 +4344,8 @@
       "x": -6.85,
       "z": -2.48,
       "installDate": "2026-09-01",
-      "productKey": "haco_ej3s3ebusb3"
+      "productKey": "haco_ej3s3ebusb3",
+      "linkOutletId": ""
     },
     {
       "id": 279,
@@ -4360,7 +4364,9 @@
       "name": "Meeting 2",
       "floor": 2,
       "x": 7.4,
-      "z": 4.3
+      "z": 4.3,
+      "linkOutletId": "",
+      "installDate": ""
     },
     {
       "id": 280,
@@ -4381,7 +4387,8 @@
       "x": 7.4,
       "z": 4.3,
       "installDate": "2026-09-01",
-      "productKey": "haco_ej3s3ebusb3"
+      "productKey": "haco_ej3s3ebusb3",
+      "linkOutletId": ""
     },
     {
       "id": 281,
@@ -4402,7 +4409,8 @@
       "x": -3.48,
       "z": -4.07,
       "installDate": "2026-09-01",
-      "productKey": "eleckta_3s3sw"
+      "productKey": "eleckta_3s3sw",
+      "linkOutletId": ""
     }
   ]
 }
