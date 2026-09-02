@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-09-02T04:49:00.378Z",
+  "exportedAt": "2026-09-02T05:52:04.095Z",
   "floors": [
     {
       "id": 1,
@@ -71,7 +71,7 @@
       "fax": 0,
       "ext": "",
       "note": "ห้องช่าง",
-      "lanNo": "1F-23",
+      "lanNo": "",
       "telNo": "",
       "labelOn": true,
       "locked": true,
@@ -4271,7 +4271,7 @@
       "z": -3.05,
       "rot": 0,
       "labelOn": true,
-      "locked": false,
+      "locked": true,
       "lan": 1,
       "tel": 0,
       "power": 0,
@@ -4290,9 +4290,9 @@
       "floor": 2,
       "x": -3.5,
       "z": -2.72,
-      "rot": 0,
+      "rot": 45,
       "labelOn": true,
-      "locked": false,
+      "locked": true,
       "lan": 1,
       "tel": 0,
       "power": 0,
