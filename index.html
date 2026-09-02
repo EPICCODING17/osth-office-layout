@@ -1706,7 +1706,16 @@ const PERSON_TYPES = ['workstation','workstationL','desk','deskL','monitor','pc'
 // ปลั๊กพ่วงไม่ได้ผูก id กับคนโดยตรง (ผูกกับจุดปลั๊กเท่านั้น) — เวลา export เลยจับคู่ตามตำแหน่งจริงบนผัง:
 // แต่ละปลั๊กพ่วง "เลือก" คนที่อยู่ใกล้ที่สุด (ไม่ใช่คนแต่ละคนเลือกปลั๊กพ่วงที่ใกล้ที่สุด) กันปลั๊กพ่วงตัวเดียว
 // โผล่ซ้ำในหลายแถวถ้ามีคนหลายคนอยู่ใกล้เท่าๆ กัน · ระยะห่างสูงสุด (ม.) ที่ยังนับว่า "อยู่ที่โต๊ะนี้"
-const POWERSTRIP_MATCH_DIST = 1.2;
+const POWERSTRIP_MATCH_DIST = 2.0;
+// ป้ายที่จะโชว์ในคอลัมน์ export: ใช้หมายเหตุก่อน (เช่น "Haco") ถ้าไม่มีค่อยใช้เลขวิ่งที่ Pong ตั้งไว้ในชื่อ
+// (เช่น "ปลั๊กพ่วง P22" -> "P22") ถ้าชื่อยังเป็นค่า default เฉยๆ ไม่มีเลขต่อท้ายก็ไม่มีอะไรให้โชว์
+function powerstripLabel(ps){
+  const note = (ps.note||'').trim();
+  if(note) return note;
+  const name = (ps.name||'').trim();
+  if(name && name!==TYPE_LABEL.powerstrip) return name.replace(new RegExp('^'+TYPE_LABEL.powerstrip+'\\s*'), '').trim();
+  return '';
+}
 function assignPowerstripNotes(people, powerstrips){
   const noteByPersonId = new Map();
   powerstrips.forEach(ps=>{
@@ -1716,7 +1725,11 @@ function assignPowerstripNotes(people, powerstrips){
       const dx=p.x-ps.x, dz=p.z-ps.z, dd=dx*dx+dz*dz;
       if(dd<bestD){ bestD=dd; best=p; }
     });
-    if(best && bestD<=POWERSTRIP_MATCH_DIST*POWERSTRIP_MATCH_DIST) noteByPersonId.set(best.id, (ps.note||'').trim());
+    if(!best || bestD>POWERSTRIP_MATCH_DIST*POWERSTRIP_MATCH_DIST) return;
+    const label = powerstripLabel(ps);
+    if(!label) return; // ปลั๊กพ่วงที่ไม่มีป้ายอะไรเลย ไม่ควรไปเขียนทับป้ายของตัวอื่นที่ใกล้คนเดียวกัน
+    const cur = noteByPersonId.get(best.id);
+    noteByPersonId.set(best.id, cur ? cur+', '+label : label);
   });
   return noteByPersonId;
 }
