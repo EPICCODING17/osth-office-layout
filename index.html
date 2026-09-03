@@ -118,6 +118,16 @@
   .gh-modal button.primary{background:var(--accent); border-color:var(--accent); color:#fff}
   .gh-modal button.primary:hover{background:#3f6de0}
   .gh-modal button.danger{color:#f0a0a0; border-color:#4a2a2e}
+  .gh-modal.wide{width:900px}
+  .catalog-table-wrap{max-height:52vh; overflow:auto; border:1px solid var(--line); border-radius:8px}
+  .catalog-table{width:100%; border-collapse:collapse; font-size:12.5px}
+  .catalog-table th{position:sticky; top:0; background:var(--panel2); text-align:left; padding:7px 6px; font-size:11px; color:var(--dim); font-weight:600; white-space:nowrap; border-bottom:1px solid var(--line)}
+  .catalog-table td{padding:5px 6px; border-bottom:1px solid var(--line)}
+  .catalog-table td:first-child{min-width:170px}
+  .catalog-table input{width:100%; min-width:52px; background:var(--panel2); border:1px solid var(--line); color:var(--text); font:inherit; font-size:12.5px; border-radius:6px; padding:6px 7px; margin-bottom:0}
+  .catalog-table input:focus{outline:none; border-color:var(--accent)}
+  .catalog-table input[type=number]{width:64px}
+  .catalog-table button.rowDel{flex:none; width:auto; padding:6px 9px; color:#f0a0a0; border-color:#4a2a2e}
   .actions button.unlocked{color:var(--tel); border-color:#1f4a30}
   .palette.readonly, .props.readonly{opacity:.5; pointer-events:none}
   aside.props{width:250px; background:var(--panel); border-left:1px solid var(--line); padding:12px; overflow-y:auto; flex-shrink:0; display:none}
@@ -170,6 +180,7 @@
       <button id="exportJson">Export JSON</button>
       <button id="exportSql">Export SQL</button>
       <button id="exportXlsx" title="รายชื่อ + เลขสาย LAN + เบอร์โทร + ปลั๊กพ่วง ต่อคน">⇩ Export Excel</button>
+      <button id="catalogBtn" title="แก้ไขยี่ห้อ/สเปค/สีของรุ่นรางปลั๊กไฟ">รุ่นราง</button>
       <button id="reset" class="warn" title="ล้างผังและกลับไปใช้ข้อมูลจาก Excel">รีเซ็ต</button>
     </div>
   </header>
@@ -197,6 +208,25 @@
       <div class="row">
         <button id="pinModalClose">ปิด</button>
         <button id="pinSubmit" class="primary">ปลดล็อก</button>
+      </div>
+    </div>
+  </div>
+  <div id="catalogModal" class="gh-modal-wrap" hidden>
+    <div class="gh-modal wide">
+      <h2>รุ่นรางปลั๊กไฟ</h2>
+      <p>แก้ไขยี่ห้อ/สเปค/สีของแต่ละรุ่น — มีผลกับทุกปลั๊กพ่วงที่เลือกใช้รุ่นนั้นทันทีหลังบันทึก</p>
+      <div class="catalog-table-wrap">
+        <table class="catalog-table" id="catalogTable">
+          <thead><tr><th>ป้ายชื่อใน select</th><th>ยี่ห้อ</th><th>รุ่น</th><th>ช่อง</th><th>สวิตช์</th><th>USB-A</th><th>USB-C</th><th>ยาว (ม.)</th><th>สี</th><th></th></tr></thead>
+          <tbody id="catalogTbody"></tbody>
+        </table>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button id="catalogAddRow">+ เพิ่มรุ่นใหม่</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button id="catalogModalClose">ปิด</button>
+        <button id="catalogSave" class="primary">บันทึก</button>
       </div>
     </div>
   </div>
@@ -242,7 +272,7 @@ function b64EncodeUtf8(str){
   return btoa(bin);
 }
 function buildExportPayload(){
-  return { version:1, exportedAt:new Date().toISOString(), floors:FLOORS, items:state.items };
+  return { version:1, exportedAt:new Date().toISOString(), floors:FLOORS, items:state.items, catalog:state.catalog };
 }
 
 const ghStatusEl = document.getElementById('ghStatus');
@@ -307,6 +337,7 @@ async function ghTryAdoptRemote(){
     if(hasToken && remoteAt <= (state.ghSyncedAt||0)) return;       // this browser is already caught up
     remote.items.forEach(i=>{ if(i.lanNo===undefined) i.lanNo=''; if(i.telNo===undefined) i.telNo=''; if(i.labelOn===undefined) i.labelOn=true; if(i.linkOutletId===undefined) i.linkOutletId=''; if(i.installDate===undefined) i.installDate=''; });
     state.items = remote.items;
+    state.catalog = remote.catalog || JSON.parse(JSON.stringify(DEFAULT_POWERSTRIP_CATALOG)); // ข้อมูลเก่าก่อนมีฟีเจอร์นี้จะไม่มี catalog มาด้วย
     state.nextId = Math.max(1, ...remote.items.map(i=>i.id)) + 1;
     state.ghSyncedAt = remoteAt || Date.now();
     persistLocal();
@@ -350,7 +381,9 @@ const TYPE_LABEL = {
 };
 // แคตตาล็อกรุ่นรางปลั๊กไฟที่ Pong ใช้จริง (2026-09-02) — แต่ละปลั๊กพ่วงเลือกได้ว่าเป็นรุ่นไหนผ่าน productKey
 // ใช้เติมคอลัมน์สเปคละเอียดตอน export แทนที่จะพิมพ์ซ้ำสเปคยาวๆ ในทุกไอเทม
-const POWERSTRIP_CATALOG = {
+// นี่คือค่าเริ่มต้น/ค่า seed เท่านั้น — ตัวที่ใช้งานจริงคือ state.catalog (แก้ไขได้ในแอปผ่านปุ่ม "รุ่นราง",
+// sync ขึ้น GitHub เหมือนผังปกติ) ตัวแปรนี้ใช้ตอน state ยังไม่มี catalog เลย (ผู้ใช้ใหม่ หรือข้อมูลเก่าก่อนมีฟีเจอร์นี้)
+const DEFAULT_POWERSTRIP_CATALOG = {
   eleckta_3s3sw: {label:'ELECKTA 3 ช่อง 3 สวิตช์ 2 USB-A 1 USB-C', brand:'ELECKTA', model:'', channels:3, switches:3, usbA:2, usbC:1, amp:null, lengthM:1, color:'ขาว'},
   haco_s2ebusb: {label:'HACO EPN-S2EBUSB', brand:'HACO', model:'EPN-S2EBUSB', channels:2, switches:1, usbA:1, usbC:1, amp:16, lengthM:3, color:''},
   haco_2s2eb2: {label:'HACO EPN-2S2EB/2', brand:'HACO', model:'EPN-2S2EB/2', channels:2, switches:2, usbA:0, usbC:0, amp:16, lengthM:3, color:''},
@@ -459,11 +492,12 @@ function load(){
     if(raw){ const s = JSON.parse(raw); if(Array.isArray(s.items)){
       s.items.forEach(i=>{ if(i.lanNo===undefined) i.lanNo=''; if(i.telNo===undefined) i.telNo=''; if(i.labelOn===undefined) i.labelOn=true; if(i.linkOutletId===undefined) i.linkOutletId=''; if(i.installDate===undefined) i.installDate=''; });
       if(!s.items.some(i=>(i.lanNo||'').trim())) numberCables(s.items);
+      if(!s.catalog) s.catalog = JSON.parse(JSON.stringify(DEFAULT_POWERSTRIP_CATALOG));
       return s;
     } }
   }catch(e){}
   const items = seedItems();
-  return { items, nextId: Math.max(...items.map(i=>i.id))+1 };
+  return { items, nextId: Math.max(...items.map(i=>i.id))+1, catalog: JSON.parse(JSON.stringify(DEFAULT_POWERSTRIP_CATALOG)) };
 }
 function persistLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){} }
 let saveT;
@@ -1533,7 +1567,7 @@ function powerstripFieldsHtml(it){
     '</select></div>'+
     '<div class="pr-row"><label>รุ่นราง</label><select data-k="productKey">'+
       '<option value="">— ไม่ระบุ —</option>'+
-      Object.keys(POWERSTRIP_CATALOG).map(k=>'<option value="'+k+'"'+(it.productKey===k?' selected':'')+'>'+esc(POWERSTRIP_CATALOG[k].label)+'</option>').join('')+
+      Object.keys(state.catalog).map(k=>'<option value="'+k+'"'+(it.productKey===k?' selected':'')+'>'+esc(state.catalog[k].label)+'</option>').join('')+
     '</select></div>'+
     '<div class="pr-row"><label>วันที่ติดตั้ง</label><input data-k="installDate" type="date" value="'+esc(it.installDate)+'"></div>'+
     ageBadgeHtml(it);
@@ -1766,7 +1800,7 @@ function buildPowerstripRows(){
     const floor = FLOORS.find(f=>f.id===ps.floor);
     const bld = buildingOfItem(ps);
     const floorLabel = floor ? floor.name + (bld ? ' / ' + bld : '') : '';
-    const cat = ps.productKey ? POWERSTRIP_CATALOG[ps.productKey] : null;
+    const cat = ps.productKey ? state.catalog[ps.productKey] : null;
     const brandModel = cat ? (cat.brand + (cat.model ? ' ' + cat.model : '')) : (ps.note||'').trim();
     const age = plugAge(ps.installDate);
     return [
@@ -1883,7 +1917,7 @@ document.getElementById('reset').onclick = ()=>{
   if(!confirm('ล้างผังปัจจุบันและกลับไปใช้ข้อมูลจากไฟล์ Excel?')) return;
   pushUndo();
   const items = seedItems();
-  state = { items, nextId: Math.max(...items.map(i=>i.id))+1 };
+  state = { items, nextId: Math.max(...items.map(i=>i.id))+1, catalog: state.catalog }; // ปุ่มนี้รีเซ็ตแค่ผัง ไม่แตะรุ่นรางที่ Pong ตั้งไว้
   ui.selected = null; ui.selectedMulti.clear();
   save(); rebuildScene(); renderPanel();
   toast('รีเซ็ตเรียบร้อย');
@@ -1929,12 +1963,14 @@ let unlocked = localStorage.getItem(LOCK_KEY) === '1';
 const lockBtn = document.getElementById('lockBtn');
 const resetBtn = document.getElementById('reset');
 const ghSetupBtn = document.getElementById('ghSetup');
+const catalogBtn = document.getElementById('catalogBtn');
 function blockedToast(){ toast('ผังถูกล็อกไว้ · กด 🔒 มุมขวาบนแล้วใส่ PIN ก่อนถึงจะแก้ไขได้'); }
 function applyLockUI(){
   palEl.classList.toggle('readonly', !unlocked);
   propsEl.classList.toggle('readonly', !unlocked);
   resetBtn.disabled = !unlocked;
   ghSetupBtn.disabled = !unlocked;
+  catalogBtn.disabled = !unlocked;
   lockBtn.textContent = unlocked ? '🔓 ปลดล็อกแล้ว' : '🔒 ล็อกอยู่';
   lockBtn.classList.toggle('unlocked', unlocked);
 }
@@ -1968,6 +2004,76 @@ pinInput.addEventListener('keydown', e=>{ if(e.key==='Enter') trySubmitPin(); })
 pinModalWrap.addEventListener('click', e=>{ if(e.target===pinModalWrap) closePinModal(); });
 addEventListener('keydown', e=>{ if(e.key==='Escape' && !pinModalWrap.hidden) closePinModal(); });
 applyLockUI();
+
+/* ---------- UI: powerstrip catalog editor ---------- */
+const catalogModalWrap = document.getElementById('catalogModal');
+const catalogTbody = document.getElementById('catalogTbody');
+let catalogDraft = null; // แก้ในฉบับร่างนี้ก่อน กด "บันทึก" ค่อยเขียนทับ state.catalog จริง — กดปิดแล้วทิ้งร่างได้เลย
+function uniqueCatalogKey(base){
+  let k = base, n = 2;
+  while(catalogDraft[k]) k = base+'_'+(n++);
+  return k;
+}
+function renderCatalogModal(){
+  catalogTbody.innerHTML = Object.entries(catalogDraft).map(([key, c])=>
+    '<tr data-key="'+esc(key)+'">'+
+      '<td><input data-f="label" value="'+esc(c.label)+'"></td>'+
+      '<td><input data-f="brand" value="'+esc(c.brand)+'"></td>'+
+      '<td><input data-f="model" value="'+esc(c.model)+'"></td>'+
+      '<td><input data-f="channels" type="number" min="0" value="'+(c.channels??'')+'"></td>'+
+      '<td><input data-f="switches" type="number" min="0" value="'+(c.switches??'')+'"></td>'+
+      '<td><input data-f="usbA" type="number" min="0" value="'+(c.usbA??'')+'"></td>'+
+      '<td><input data-f="usbC" type="number" min="0" value="'+(c.usbC??'')+'"></td>'+
+      '<td><input data-f="lengthM" type="number" min="0" step="0.1" value="'+(c.lengthM??'')+'"></td>'+
+      '<td><input data-f="color" value="'+esc(c.color)+'"></td>'+
+      '<td><button class="rowDel" data-act="del" title="ลบรุ่นนี้">ลบ</button></td>'+
+    '</tr>'
+  ).join('');
+}
+function openCatalogModal(){
+  if(!unlocked){ blockedToast(); return; }
+  catalogDraft = JSON.parse(JSON.stringify(state.catalog));
+  renderCatalogModal();
+  catalogModalWrap.hidden = false;
+  requestAnimationFrame(()=> catalogModalWrap.classList.add('open'));
+}
+function closeCatalogModal(){
+  catalogModalWrap.classList.remove('open');
+  setTimeout(()=>{ catalogModalWrap.hidden = true; }, 180);
+}
+catalogBtn.onclick = openCatalogModal;
+document.getElementById('catalogModalClose').onclick = closeCatalogModal;
+catalogModalWrap.addEventListener('click', e=>{ if(e.target===catalogModalWrap) closeCatalogModal(); });
+catalogTbody.addEventListener('input', e=>{
+  const tr = e.target.closest('tr'); if(!tr) return;
+  const key = tr.dataset.key, f = e.target.dataset.f; if(!f) return;
+  const c = catalogDraft[key]; if(!c) return;
+  const isNum = ['channels','switches','usbA','usbC','lengthM'].includes(f);
+  c[f] = isNum ? (e.target.value==='' ? null : +e.target.value) : e.target.value;
+});
+catalogTbody.addEventListener('click', e=>{
+  const btn = e.target.closest('button[data-act="del"]'); if(!btn) return;
+  const key = btn.closest('tr').dataset.key;
+  const inUse = state.items.some(i=>i.type==='powerstrip' && i.productKey===key);
+  if(inUse && !confirm('รุ่นนี้ถูกใช้อยู่กับปลั๊กพ่วงบางตัว ลบแล้วปลั๊กเหล่านั้นจะไม่มีสเปคอีก (แค่ในร่างนี้ ยังไม่บันทึกจริง) ลบเลยไหม?')) return;
+  delete catalogDraft[key];
+  renderCatalogModal();
+});
+document.getElementById('catalogAddRow').onclick = ()=>{
+  const key = uniqueCatalogKey('model');
+  catalogDraft[key] = { label:'รุ่นใหม่', brand:'', model:'', channels:null, switches:null, usbA:0, usbC:0, amp:null, lengthM:null, color:'' };
+  renderCatalogModal();
+  const firstInput = catalogTbody.querySelector('tr[data-key="'+key+'"] input');
+  if(firstInput){ firstInput.focus(); firstInput.select(); }
+};
+document.getElementById('catalogSave').onclick = ()=>{
+  state.catalog = catalogDraft;
+  save();
+  renderPanel(); // รีเฟรช dropdown/สเปคในแผงคุณสมบัติถ้าเปิดปลั๊กพ่วงอยู่พอดี
+  closeCatalogModal();
+  toast('บันทึกรุ่นรางแล้ว');
+};
+addEventListener('keydown', e=>{ if(e.key==='Escape' && !catalogModalWrap.hidden) closeCatalogModal(); });
 
 /* ---------- loop ---------- */
 rebuildScene();
