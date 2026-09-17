@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-09-02T09:41:34.827Z",
+  "exportedAt": "2026-09-17T06:57:36.898Z",
   "floors": [
     {
       "id": 1,
@@ -4412,5 +4412,79 @@
       "productKey": "eleckta_3s3sw",
       "linkOutletId": ""
     }
-  ]
+  ],
+  "catalog": {
+    "eleckta_3s3sw": {
+      "label": "ELECKTA 3 ช่อง 3 สวิตช์ 2 USB-A 1 USB-C",
+      "brand": "ELECKTA",
+      "model": "",
+      "channels": 3,
+      "switches": 3,
+      "usbA": 2,
+      "usbC": 1,
+      "amp": null,
+      "lengthM": 1,
+      "color": "ขาว"
+    },
+    "haco_s2ebusb": {
+      "label": "HACO EPN-S2EBUSB",
+      "brand": "HACO",
+      "model": "EPN-S2EBUSB",
+      "channels": 2,
+      "switches": 1,
+      "usbA": 1,
+      "usbC": 1,
+      "amp": 16,
+      "lengthM": 3,
+      "color": ""
+    },
+    "haco_2s2eb2": {
+      "label": "HACO EPN-2S2EB/2",
+      "brand": "HACO",
+      "model": "EPN-2S2EB/2",
+      "channels": 2,
+      "switches": 2,
+      "usbA": 0,
+      "usbC": 0,
+      "amp": 16,
+      "lengthM": 3,
+      "color": ""
+    },
+    "haco_ej3s3ebusb3": {
+      "label": "HACO EJ-3S3EBUSB/3",
+      "brand": "HACO",
+      "model": "EJ-3S3EBUSB/3",
+      "channels": 3,
+      "switches": 3,
+      "usbA": 2,
+      "usbC": 0,
+      "amp": null,
+      "lengthM": 3,
+      "color": "ขาว"
+    },
+    "haco_s4ebusbac3": {
+      "label": "HACO EPN-S4EBUSBAC/3",
+      "brand": "HACO",
+      "model": "EPN-S4EBUSBAC/3",
+      "channels": 4,
+      "switches": 1,
+      "usbA": 1,
+      "usbC": 1,
+      "amp": 16,
+      "lengthM": 3,
+      "color": ""
+    },
+    "haco_s5eb5": {
+      "label": "HACO EPN-S5EB/5",
+      "brand": "HACO",
+      "model": "EPN-S5EB/5",
+      "channels": 5,
+      "switches": 1,
+      "usbA": 0,
+      "usbC": 0,
+      "amp": 16,
+      "lengthM": 5,
+      "color": "เทา"
+    }
+  }
 }
